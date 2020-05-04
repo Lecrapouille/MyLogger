@@ -24,10 +24,11 @@
 
 namespace tool { namespace log {
 
+//------------------------------------------------------------------------------
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 static const char *c_str_severity[Severity::MaxLoggerSeverity + 1] =
-  {
+{
     [Severity::None]      = "",
     [Severity::Info]      = "[INFO]",
     [Severity::Debug]     = "[DEBUG]",
@@ -38,136 +39,148 @@ static const char *c_str_severity[Severity::MaxLoggerSeverity + 1] =
     [Severity::Exception] = "[THROW]",
     [Severity::Catch]     = "[CATCH]",
     [Severity::Fatal]     = "[FATAL]"
-  };
+};
 #pragma GCC diagnostic pop
 
+//------------------------------------------------------------------------------
 Logger::Logger(std::string const& filename)
 {
-  open(filename);
+    open(filename);
 }
 
+//------------------------------------------------------------------------------
 Logger::Logger()
 {
-  open(config::log_path);
+    open(config::log_path);
 }
 
+//------------------------------------------------------------------------------
 Logger::~Logger()
 {
-  close();
+    close();
 }
 
+//------------------------------------------------------------------------------
 bool Logger::changeLog(std::string const& logfile)
 {
-  close();
-  return open(logfile);
+    close();
+    return open(logfile);
 }
 
+//------------------------------------------------------------------------------
 bool Logger::open(std::string const& logfile)
 {
-  // Distinguish behavior between simple file and absolute path.
-  std::string dir = File::dirName(logfile);
-  std::string file(logfile);
-  if (dir.empty())
+    // Distinguish behavior between simple file and absolute path.
+    std::string dir = File::dirName(logfile);
+    std::string file(logfile);
+    if (dir.empty())
     {
-      dir = config::tmp_path;
-      file = dir + file;
+        dir = config::tmp_path;
+        file = dir + file;
     }
 
-  // Call it before Logger constructor
-  if (!File::mkdir(dir))
+    // Call it before Logger constructor
+    if (!File::mkdir(dir))
     {
-      std::cerr << "Failed creating the temporary directory '"
-                << config::tmp_path << "'" << std::endl;
-      return false;
+        std::cerr << "Failed creating the temporary directory '"
+                  << config::tmp_path << "'" << std::endl;
+        return false;
     }
 
-  // Try to open the given log path
-  m_file.open(file.c_str());
-  if (!m_file.is_open())
+    // Try to open the given log path
+    m_file.open(file.c_str());
+    if (!m_file.is_open())
     {
-      std::cerr << "Failed creating the log file '"
-                << file << "'. Reason is '"
-                << strerror(errno) << "'"
-                << std::endl;
-      return false;
+        std::cerr << "Failed creating the log file '"
+                  << file << "'. Reason is '"
+                  << strerror(errno) << "'"
+                  << std::endl;
+        return false;
     }
-  else
+    else
     {
-      std::cout << "Log created: '" << file
-                << "'" << std::endl << std::endl;
-      header();
+        std::cout << "Log created: '" << file
+                  << "'" << std::endl << std::endl;
+        header();
     }
-  return true;
+    return true;
 }
 
+//------------------------------------------------------------------------------
 void Logger::close()
 {
-  if (!m_file.is_open())
-    return ;
+    if (!m_file.is_open())
+        return ;
 
-  footer();
-  m_file.close();
+    footer();
+    m_file.close();
 }
 
+//------------------------------------------------------------------------------
 void Logger::write(const char *message, const int /*length*/)
 {
-  if (nullptr != m_stream)
+    if (nullptr != m_stream)
     {
-      (*m_stream) << message;
-      m_stream->flush();
+        (*m_stream) << message;
+        m_stream->flush();
     }
 
-  if (!m_file.is_open())
-    return ;
+    if (!m_file.is_open())
+        return ;
 
-  m_file << message;
-  m_file.flush();
+    m_file << message;
+    m_file.flush();
 }
 
-void Logger::beginLine()
+//------------------------------------------------------------------------------
+void Logger::beginOfLine()
 {
-  currentTime();
-  write(m_buffer_time);
-  write(c_str_severity[m_severity]);
+    currentTime();
+    write(m_buffer_time);
+    write(c_str_severity[m_severity]);
 }
 
+//------------------------------------------------------------------------------
 void Logger::header()
 {
-  currentDate();
-  log("======================================================\n"
-      "  %s %s %u.%u - Event log - %s\n"
-      "  git branch: %s\n"
-      "  git SHA1: %s\n"
-      "======================================================\n\n",
-      config::project_name.c_str(),
-      config::Debug == config::mode ? "Debug" : "Release",
-      config::major_version,
-      config::minor_version,
-      m_buffer_time,
-      config::git_branch.c_str(),
-      config::git_sha1.c_str());
+    currentDate();
+    log("======================================================\n"
+        "  %s %s %u.%u - Event log - %s\n"
+        "  git branch: %s\n"
+        "  git SHA1: %s\n"
+        "======================================================\n\n",
+        config::project_name.c_str(),
+        config::debug ? "Debug" : "Release",
+        config::major_version,
+        config::minor_version,
+        m_buffer_time,
+        config::git_branch.c_str(),
+        config::git_sha1.c_str());
 }
 
+//------------------------------------------------------------------------------
 void Logger::footer()
 {
-  currentTime();
-  log("\n======================================================\n"
-      "  %s log closed at %s\n"
-      "======================================================\n\n",
-      config::project_name.c_str(),
-      m_buffer_time);
+    currentTime();
+    log("\n======================================================\n"
+        "  %s log closed at %s\n"
+        "======================================================\n\n",
+        config::project_name.c_str(),
+        m_buffer_time);
 }
 
+//------------------------------------------------------------------------------
 ILogger& Logger::operator<<(const Severity& severity)
 {
-  write(c_str_severity[severity]);
-  return *this;
+    write(c_str_severity[severity]);
+    return *this;
 }
 
+//------------------------------------------------------------------------------
 ILogger& Logger::operator<<(const char *msg)
 {
-  write(msg);
-  return *this;
+    write(msg);
+    return *this;
 }
 
 } } // namespace tool::log

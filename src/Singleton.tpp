@@ -19,10 +19,10 @@
 // along with MyLogger.  If not, see <http://www.gnu.org/licenses/>.
 //=====================================================================
 
-#ifndef SINGLETON_TPP_
-#  define SINGLETON_TPP_
+#ifndef MYLOGGER_SINGLETON_TPP
+#  define MYLOGGER_SINGLETON_TPP
 
-// *************************************************************************************************
+// *****************************************************************************
 //! \brief Long-life singleton (use reference for returning the
 //! instance).
 //!
@@ -42,74 +42,74 @@
 //! singleton class letting other class to log; Singleton1 logs its
 //! information during its destruction. If Logger is destroyed before
 //! Singleton1, a crash will occur when trying to write in the log.
-// *************************************************************************************************
+// *****************************************************************************
 template <class T>
 class LongLifeSingleton
 {
 public:
 
-  static T& instance()
-  {
-    static T instance;
-    return instance;
-  }
+    static T& instance()
+    {
+        static T instance;
+        return instance;
+    }
 
 protected:
 
-  LongLifeSingleton() { }
-  ~LongLifeSingleton() { }
+    LongLifeSingleton() = default;
+    ~LongLifeSingleton() = default;
 
 private:
 
-  //! \brief Forbid usage of constructor by copy.
-  LongLifeSingleton(LongLifeSingleton const&) = delete;
-  //! \brief Forbid usage of constructor by moving.
-  LongLifeSingleton(LongLifeSingleton&&) = delete;
-  //! \brief Forbid usage of the copy assignement.
-  LongLifeSingleton& operator=(LongLifeSingleton const&) = delete;
-  //! \brief Forbid usage of the move assignement.
-  LongLifeSingleton& operator=(LongLifeSingleton &&) = delete;
+    //! \brief Forbid usage of constructor by copy.
+    LongLifeSingleton(LongLifeSingleton const&) = delete;
+    //! \brief Forbid usage of constructor by moving.
+    LongLifeSingleton(LongLifeSingleton&&) = delete;
+    //! \brief Forbid usage of the copy assignement.
+    LongLifeSingleton& operator=(LongLifeSingleton const&) = delete;
+    //! \brief Forbid usage of the move assignement.
+    LongLifeSingleton& operator=(LongLifeSingleton &&) = delete;
 };
 
-// *************************************************************************************************
+// *****************************************************************************
 //! \brief
-// *************************************************************************************************
+// *****************************************************************************
 template <class T>
 class LazySingleton;
 
-// *************************************************************************************************
+// *****************************************************************************
 //! \brief Class for destroying a lazy singleton automaticly.
 //! https://sourcemaking.com/design_patterns/to_kill_a_singleton
-// *************************************************************************************************
+// *****************************************************************************
 template <class T>
 class SingletonDestroyer
 {
 public:
 
-  SingletonDestroyer()
-    : m_singleton(nullptr)
-  {
-  }
+    SingletonDestroyer()
+        : m_singleton(nullptr)
+    {
+    }
 
-  ~SingletonDestroyer()
-  {
-    if (nullptr != m_singleton)
-      {
-        m_singleton->destroy();
-      }
-  }
+    ~SingletonDestroyer()
+    {
+        if (nullptr != m_singleton)
+        {
+            m_singleton->destroy();
+        }
+    }
 
-  void set(LazySingleton<T> &s)
-  {
-    m_singleton = &s;
-  }
+    void set(LazySingleton<T> &s)
+    {
+        m_singleton = &s;
+    }
 
 private:
 
-  LazySingleton<T> *m_singleton;
+    LazySingleton<T> *m_singleton;
 };
 
-// *************************************************************************************************
+// *****************************************************************************
 //! \brief The regular singleton (use pointer for returning the instance).
 //!
 //! You have to manage by yourself its life (when to instanciated and
@@ -122,45 +122,45 @@ private:
 //! singleton class letting other class to log; Singleton1 logs its
 //! information during its destruction. If Logger is destroyed before
 //! Singleton1, a crash will occur when trying to write in the log.
-// *************************************************************************************************
+// *****************************************************************************
 template <class T> class Singleton // unique_ptr: FIXME https://cppisland.com/?p=501
 {
 public:
 
-  static T& instance()
-  {
-    if (nullptr == s_instance)
-      {
-        s_instance = new T;
-      }
-    return *s_instance;
-  }
+    static T& instance()
+    {
+        if (nullptr == s_instance)
+        {
+            s_instance = new T;
+        }
+        return *s_instance;
+    }
 
-  static void destroy()
-  {
-    if (nullptr != s_instance)
-      {
-        delete s_instance;
-        s_instance = nullptr;
-      }
-  }
+    static void destroy()
+    {
+        if (nullptr != s_instance)
+        {
+            delete s_instance;
+            s_instance = nullptr;
+        }
+    }
 
 protected:
 
-  Singleton() { }
-  ~Singleton() { }
+    Singleton() = default;
+    ~Singleton() = default;
 
 private:
 
-  static T* s_instance;
+    static T* s_instance;
 
-  Singleton(Singleton&);
-  void operator=(Singleton);
+    Singleton(Singleton&);
+    void operator=(Singleton);
 };
 
 template <class T> T* Singleton<T>::s_instance = nullptr;
 
-// *************************************************************************************************
+// *****************************************************************************
 //! \brief Lazy singleton (use pointer for returning the instance).
 //!
 //! This class is observed by the class SingletonDestroyer for an
@@ -173,77 +173,77 @@ template <class T> T* Singleton<T>::s_instance = nullptr;
 //! singleton class letting other class to log; Singleton1 logs its
 //! information during its destruction. If Logger is destroyed before
 //! Singleton1, a crash will occur when trying to write in the log.
-// *************************************************************************************************
+// *****************************************************************************
 template <class T>
 class LazySingleton
 {
 private:
 
-  friend class SingletonDestroyer<T>;
+    friend class SingletonDestroyer<T>;
 
 public:
 
-  static T& instance()
-  {
-    //! See http://www.aristeia.com/Papers/DDJ_Jul_Aug_2004_revised.pdf
-    if (nullptr == s_instance)
-      {
-        //FIXME add lock for thread safe
-        // if (nullptr == s_instance)
-          {
-            T* volatile temp = new T;
-            s_instance = temp;
-            s_destroyer.set(*s_instance);
-          }
-      }
-    return *s_instance;
-  }
+    static T& instance()
+    {
+        //! See http://www.aristeia.com/Papers/DDJ_Jul_Aug_2004_revised.pdf
+        if (nullptr == s_instance)
+        {
+            //FIXME add lock for thread safe
+            // if (nullptr == s_instance)
+            {
+                T* volatile temp = new T;
+                s_instance = temp;
+                s_destroyer.set(*s_instance);
+            }
+        }
+        return *s_instance;
+    }
 
-  //\! brief Create the constructor and pass infinite number of args
-  template<class Fn, class ... Args>
-  static T& instance(Fn&& fn, Args&&... args)
-  {
-    //! See http://www.aristeia.com/Papers/DDJ_Jul_Aug_2004_revised.pdf
-    if (nullptr == s_instance)
-      {
-        //FIXME add lock for thread safe
-        // if (nullptr == s_instance)
-          {
-            T* volatile temp = new T(fn, args...);
-            s_instance = temp;
-            s_destroyer.set(*s_instance);
-          }
-      }
-    return *s_instance;
-  }
+    //\! brief Create the constructor and pass infinite number of args
+    template<class Fn, class ... Args>
+    static T& instance(Fn&& fn, Args&&... args)
+    {
+        //! See http://www.aristeia.com/Papers/DDJ_Jul_Aug_2004_revised.pdf
+        if (nullptr == s_instance)
+        {
+            //FIXME add lock for thread safe
+            // if (nullptr == s_instance)
+            {
+                T* volatile temp = new T(fn, args...);
+                s_instance = temp;
+                s_destroyer.set(*s_instance);
+            }
+        }
+        return *s_instance;
+    }
 
-  static void destroy()
-  {
-    if (nullptr != s_instance)
-      {
-        delete s_instance;
-        s_instance = nullptr;
-      }
-  }
+    static void destroy()
+    {
+        if (nullptr != s_instance)
+        {
+            delete s_instance;
+            s_instance = nullptr;
+        }
+    }
 
 protected:
 
-  LazySingleton() { }
-  ~LazySingleton() { }
+    LazySingleton() = default;
+    ~LazySingleton() = default;
 
 private:
 
-  //! \brief Forbid usage of constructor by copy.
-  LazySingleton(LazySingleton const&) = delete;
-  //! \brief Forbid usage of constructor by moving.
-  LazySingleton(LazySingleton&&) = delete;
-  //! \brief Forbid usage of the copy assignement.
-  LazySingleton& operator=(LazySingleton const&) = delete;
-  //! \brief Forbid usage of the move assignement.
-  LazySingleton& operator=(LazySingleton &&) = delete;
-  //! \brief The instance of the singleton (init to nullptr).
-  static SingletonDestroyer<T> s_destroyer;
-  static T* volatile s_instance;
+    //! \brief Forbid usage of constructor by copy.
+    LazySingleton(LazySingleton const&) = delete;
+    //! \brief Forbid usage of constructor by moving.
+    LazySingleton(LazySingleton&&) = delete;
+    //! \brief Forbid usage of the copy assignement.
+    LazySingleton& operator=(LazySingleton const&) = delete;
+    //! \brief Forbid usage of the move assignement.
+    LazySingleton& operator=(LazySingleton &&) = delete;
+    //! \brief The instance of the singleton (init to nullptr).
+    static SingletonDestroyer<T> s_destroyer;
+    static T* volatile s_instance;
 };
 
 template <class T>
@@ -251,4 +251,4 @@ T* volatile LazySingleton<T>::s_instance = nullptr;
 template <class T>
 SingletonDestroyer<T> LazySingleton<T>::s_destroyer;
 
-#endif /* SINGLETON_TPP_ */
+#endif /* MYLOGGER_SINGLETON_TPP */

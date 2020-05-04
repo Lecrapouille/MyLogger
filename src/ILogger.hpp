@@ -18,8 +18,8 @@
 // along with MyLogger.  If not, see <http://www.gnu.org/licenses/>.
 //=====================================================================
 
-#ifndef ILOGGER_HPP_
-#  define ILOGGER_HPP_
+#ifndef MYLOGGER_ILOGGER_HPP
+#  define MYLOGGER_ILOGGER_HPP
 
 #  include <mutex>
 #  include <stdarg.h>
@@ -31,68 +31,93 @@
 
 namespace tool { namespace log {
 
+// *****************************************************************************
+//! \brief Different severity enumerate
+// *****************************************************************************
 enum Severity
 {
     None, Info, Debug, Warning, Failed, Error, Signal, Exception,
     Catch, Fatal, MaxLoggerSeverity = Fatal
 };
 
-// **************************************************************
-//
-// **************************************************************
+// *****************************************************************************
+//! \brief Interface class for loggers.
+// *****************************************************************************
 class ILogger
 {
 public:
 
-  virtual ~ILogger() {};
-  void log(const char* format, ...);
-  void log(std::ostream *stream, enum Severity severity, const char* format, ...);
-  template <class T> ILogger& operator<<(const T& tolog);
-  const char *strtime();
+    //! \brief Virtual destructor because of virtual methods.
+    virtual ~ILogger() = default;
+
+    //! \brief entry point for logging data. This method formats data into
+    //! m_buffer up to 1024 chars.
+    void log(const char* format, ...);
+
+    //! \brief entry point for logging data. This method formats data into
+    //! m_buffer.
+    void log(std::ostream *stream, enum Severity severity, const char* format, ...);
+
+    //! \brief entry point for logging data. This method formats data into
+    //! m_buffer.
+    template <class T> ILogger& operator<<(const T& tolog);
 
 protected:
 
-  void currentDate();
-  void currentTime();
+    //! \brief Return the date or time get by methods currentDate() or
+    //! currentTime()
+    const char *strtime();
+
+    //! \brief Get the current date (year, month, day). Store the date as string
+    //! inside m_buffer_time.
+    void currentDate();
+
+    //! \brief Get the current time (hour, minute, second). Store the date as
+    //! string inside m_buffer_time.
+    void currentTime();
 
 private:
 
-  virtual void write(std::string const& message) = 0;
-  virtual void write(const char *message, const int length = -1) = 0;
-  virtual void beginLine() = 0;
+    //! \brief Virtual method used for storing m_buffer in the media you wish.
+    virtual void write(std::string const& message) = 0;
+
+    //! \brief Virtual method used for storing m_buffer in the media you wish.
+    virtual void write(const char *message, const int length = -1) = 0;
+
+    //! \brief Virtual method for formating the begining of the line log (ie.
+    //! severity, date, filename ...).
+    virtual void beginOfLine() = 0;
 
 protected:
 
-  std::mutex m_mutex;
-  constexpr static const uint32_t c_buffer_size = 1024;
-  char m_buffer[c_buffer_size];
-  enum Severity m_severity = None;
-  char m_buffer_time[32];
-  std::ostream *m_stream = nullptr;
+    //! \brief Max char for formating a line of logs.
+    constexpr static const uint32_t c_buffer_size = 1024u;
+
+    //! \brief Buffer used for storing a line of logs.
+    char m_buffer[c_buffer_size];
+
+    //! \brief Store date information
+    char m_buffer_time[32];
+
+    //! \brief Protect write against concurrency.
+    std::mutex m_mutex;
+
+    //! \brief Current log severity.
+    enum Severity m_severity = None;
+
+    //! \brief Memorize the stream for the method write() when log(std::ostream*).
+    std::ostream *m_stream = nullptr;
 };
 
-template <class T> ILogger& ILogger::operator <<(const T& to_log)
+template <class T> ILogger& ILogger::operator<<(const T& to_log)
 {
-  std::ostringstream stream;
-  stream << to_log;
-  write(stream.str());
+    std::ostringstream stream;
+    stream << to_log;
+    write(stream.str());
 
-  return *this;
+    return *this;
 }
-
-// **************************************************************
-//
-// **************************************************************
-class FileLogger: public ILogger
-{
-private:
-
-  virtual bool open(std::string const& filename) = 0;
-  virtual void close() = 0;
-  virtual void header() = 0;
-  virtual void footer() = 0;
-};
 
 } } // namespace tool::log
 
-#endif /* ILOGGER_HPP_ */
+#endif /* MYLOGGER_ILOGGER_HPP */

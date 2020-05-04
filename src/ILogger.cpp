@@ -23,62 +23,67 @@
 
 namespace tool { namespace log {
 
+//------------------------------------------------------------------------------
 const char *ILogger::strtime()
 {
-  currentTime();
-  return m_buffer_time;
+    currentTime();
+    return m_buffer_time;
 }
 
+//------------------------------------------------------------------------------
 void ILogger::currentDate()
 {
-  time_t current_time = time(nullptr);
+    time_t current_time = time(nullptr);
 
-  strftime(m_buffer_time, sizeof (m_buffer_time), "[%Y/%m/%d]", localtime(&current_time));
+    strftime(m_buffer_time, sizeof (m_buffer_time), "[%Y/%m/%d]", localtime(&current_time));
 }
 
+//------------------------------------------------------------------------------
 void ILogger::currentTime()
 {
-  time_t current_time = time(nullptr);
+    time_t current_time = time(nullptr);
 
-  strftime(m_buffer_time, sizeof (m_buffer_time), "[%H:%M:%S]", localtime(&current_time));
+    strftime(m_buffer_time, sizeof (m_buffer_time), "[%H:%M:%S]", localtime(&current_time));
 }
 
+//------------------------------------------------------------------------------
 void ILogger::log(std::ostream *stream, enum Severity severity, const char* format, ...)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
 
-  int n;
-  va_list params;
+    int n;
+    va_list params;
 
-  m_severity = severity;
-  m_stream = stream;
-  beginLine();
-  va_start(params, format);
-  n = vsnprintf(m_buffer, c_buffer_size - 2, format, params);
-  va_end(params);
+    m_severity = severity;
+    m_stream = stream;
+    beginOfLine();
+    va_start(params, format);
+    n = vsnprintf(m_buffer, c_buffer_size - 2u, format, params);
+    va_end(params);
 
-  // Add a '\n' if missing
-  if ('\n' != m_buffer[n - 1])
+    // Add a '\n' if missing
+    if ('\n' != m_buffer[n - 1])
     {
-      m_buffer[n] = '\n';
-      m_buffer[n + 1] = '\0';
+        m_buffer[n] = '\n';
+        m_buffer[n + 1] = '\0';
     }
 
-  write(m_buffer);
+    write(m_buffer);
 
-  m_stream = nullptr;
+    m_stream = nullptr;
 }
 
+//------------------------------------------------------------------------------
 void ILogger::log(const char* format, ...)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
 
-  va_list params;
+    va_list params;
 
-  va_start(params, format);
-  vsnprintf(m_buffer, c_buffer_size, format, params);
-  va_end(params);
-  write(m_buffer);
+    va_start(params, format);
+    vsnprintf(m_buffer, c_buffer_size, format, params);
+    va_end(params);
+    write(m_buffer);
 }
 
 } } // namespace tool::log
