@@ -41,8 +41,7 @@ OBJS = main.o
 ###################################################
 # Project defines
 #
-DEFINES += \
-  -DPROJECT_TEMP_DIR=\"/tmp/$(TARGET)/\"
+DEFINES +=
 
 ###################################################
 # Link against MyLogger library (make install is
