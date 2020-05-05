@@ -1,6 +1,10 @@
 # 
 build
 examples/external
+tests/external
+tests/build
+doc/coverage
+*~
 
 # Prerequisites
 *.d
