@@ -62,11 +62,11 @@ public:
     //! m_buffer.
     template <class T> ILogger& operator<<(const T& tolog);
 
-protected:
-
     //! \brief Return the date or time get by methods currentDate() or
     //! currentTime()
     const char *strtime();
+
+protected:
 
     //! \brief Get the current date (year, month, day). Store the date as string
     //! inside m_buffer_time.
