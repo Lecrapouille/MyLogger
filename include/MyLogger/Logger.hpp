@@ -61,9 +61,9 @@ namespace tool { namespace log {
 // *****************************************************************************
 //! \brief File Logger service. Manage a single file.
 // *****************************************************************************
-class Logger: public IFileLogger, public Singleton<Logger>
+class Logger: public IFileLogger, public LongLifeSingleton<Logger>
 {
-    friend class Singleton<Logger>;
+    friend class LongLifeSingleton<Logger>;
 
 public:
 
