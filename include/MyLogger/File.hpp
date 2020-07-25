@@ -24,9 +24,20 @@
 #  include <sys/stat.h>
 #  include <unistd.h>
 #  include <string.h>
+#  include <time.h>
 #  include <string>
 #  include <iostream>
 #  include <algorithm>
+
+// **************************************************************
+// Architecture specific
+// **************************************************************
+#  ifdef _WIN32
+#    include <direct.h>
+#    define MKDIR(p, m) (void) m, ::_mkdir(p)
+#  else
+#    define MKDIR(p, m) ::mkdir(p, m)
+#  endif
 
 // **************************************************************
 //! \brief Utility of file name manipulation
@@ -203,7 +214,7 @@ public:
 
             if (stat(new_path.c_str(), &st) != 0)
             {
-                if ((::mkdir(new_path.c_str(), mode) != 0) && (errno != EEXIST))
+                if ((MKDIR(new_path.c_str(), mode) != 0) && (errno != EEXIST))
                 {
                     std::cout << "cannot create folder [" << new_path << "] : "
                               << strerror(errno) << std::endl;
