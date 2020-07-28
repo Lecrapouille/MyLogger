@@ -22,6 +22,35 @@
 #include "MyLogger/File.hpp"
 #include <cstring>
 
+#ifdef _WIN32
+// FIXME: weak or undefined references are not supported on Windows DLLs
+// while accepted by Linux. See GitHub ticket #1.
+namespace config
+{
+  //! \brief Compiled in debug or released mode
+  bool debug;
+  //! \brief Used for logs and GUI.
+  std::string project_name;
+  //! \brief Major version of project
+  uint32_t major_version;
+  //! \brief Minor version of project
+  uint32_t minor_version;
+  //! \brief Save the git SHA1
+  std::string git_sha1;
+  //! \brief Save the git branch
+  std::string git_branch;
+  //! \brief Pathes where default project resources have been installed
+  //! (when called  by the shell command: sudo make install).
+  std::string data_path;
+  //! \brief Location for storing temporary files
+  std::string tmp_path;
+  //! \brief Give a name to the default project log file.
+  std::string log_name;
+  //! \brief Define the full path for the project.
+  std::string log_path;
+}
+#endif
+
 namespace tool { namespace log {
 
 //------------------------------------------------------------------------------
