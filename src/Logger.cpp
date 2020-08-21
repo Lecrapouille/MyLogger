@@ -22,7 +22,7 @@
 #include "MyLogger/File.hpp"
 #include <cstring>
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
 // FIXME: weak or undefined references are not supported on Windows DLLs
 // while accepted by Linux. See GitHub ticket #1.
 namespace config
