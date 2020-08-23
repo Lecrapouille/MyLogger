@@ -23,31 +23,31 @@
 #include <cstring>
 
 #if defined(_WIN32) || defined(__APPLE__)
-// FIXME: weak or undefined references are not supported on Windows DLLs
-// while accepted by Linux. See GitHub ticket #1.
+// Undefined symbols are not supported by Windows or Mac OS X
+// while accepted by Linux.
 namespace config
 {
   //! \brief Compiled in debug or released mode
-  bool debug;
+  bool debug __attribute__((weak));
   //! \brief Used for logs and GUI.
-  std::string project_name;
+  std::string project_name __attribute__((weak));
   //! \brief Major version of project
-  uint32_t major_version;
+  uint32_t major_version __attribute__((weak));
   //! \brief Minor version of project
-  uint32_t minor_version;
+  uint32_t minor_version __attribute__((weak));
   //! \brief Save the git SHA1
-  std::string git_sha1;
+  std::string git_sha1 __attribute__((weak));
   //! \brief Save the git branch
-  std::string git_branch;
+  std::string git_branch __attribute__((weak));
   //! \brief Pathes where default project resources have been installed
   //! (when called  by the shell command: sudo make install).
-  std::string data_path;
+  std::string data_path __attribute__((weak));
   //! \brief Location for storing temporary files
-  std::string tmp_path;
+  std::string tmp_path __attribute__((weak));
   //! \brief Give a name to the default project log file.
-  std::string log_name;
+  std::string log_name __attribute__((weak));
   //! \brief Define the full path for the project.
-  std::string log_path;
+  std::string log_path __attribute__((weak));
 }
 #endif
 
