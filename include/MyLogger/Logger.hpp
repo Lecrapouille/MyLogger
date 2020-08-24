@@ -25,36 +25,52 @@
 #  include "IFileLogger.hpp"
 #  include "File.hpp"
 
-// *****************************************************************************
-//! \brief Forward declaration concerning the project that will be stored in
-//! the header of the logger.
-// *****************************************************************************
-namespace config
+namespace project {
+
+struct Info
 {
-//! \brief Project compiled in release or debug mode ?
-extern bool debug;
-//! \brief Either create a new log file or smash the older log.
-extern bool separated_logs;
-//! \brief Used for logs and GUI.
-extern std::string project_name;
-//! \brief Major version of project
-extern uint32_t major_version;
-//! \brief Minor version of project
-extern uint32_t minor_version;
-//! \brief Save the git SHA1
-extern std::string git_sha1;
-//! \brief Save the git branch
-extern std::string git_branch;
-//! \brief Pathes where default project resources have been installed
-//! (when called  by the shell command: sudo make install).
-extern std::string data_path;
-//! \brief Location for storing temporary files
-extern std::string tmp_path;
-//! \brief Give a name to the default project log file.
-extern std::string log_name;
-//! \brief Define the full path for the project.
-extern std::string log_path;
-}
+    Info() = default;
+    Info(bool const dbg, const char* name, uint32_t const major,
+         uint32_t const minor, const char* sha1, const char* branch,
+         const char* data, const char* tmp, const char* logname,
+         const char* logpath)
+        : debug(dbg),
+          project_name(name),
+          major_version(major),
+          minor_version(minor),
+          git_sha1(sha1),
+          git_branch(branch),
+          data_path(data),
+          tmp_path(tmp),
+          log_name(logname),
+          log_path(logpath)
+    {}
+
+    //! \brief Compiled in debug or released mode
+    bool debug;
+    //! \brief Used for logs and GUI.
+    std::string project_name;
+    //! \brief Major version of project
+    uint32_t major_version;
+    //! \brief Minor version of project
+    uint32_t minor_version;
+    //! \brief Save the git SHA1
+    std::string git_sha1;
+    //! \brief Save the git branch
+    std::string git_branch;
+    //! \brief Pathes where default project resources have been installed
+    //! (when called  by the shell command: sudo make install).
+    std::string data_path;
+    //! \brief Location for storing temporary files
+    std::string tmp_path;
+    //! \brief Give a name to the default project log file.
+    std::string log_name;
+    //! \brief Define the full path for the project.
+    std::string log_path;
+};
+
+} // namespace project
+
 
 namespace tool { namespace log {
 
@@ -67,17 +83,19 @@ class Logger: public IFileLogger, public LongLifeSingleton<Logger>
 
 public:
 
-    //! \brief
-    Logger();
+    Logger() = default;
 
     //! \brief Open the file.
-    Logger(std::string const& logfile);
+    //! \param info structure holding all project information (name, version ...)
+    //! \param logfile the path where to create the file
+    Logger(project::Info const& info, std::string const& filename);
 
     //! \brief Close the file.
     virtual ~Logger();
 
     //! \brief Reopen the log (old content is removed).
     bool changeLog(std::string const& logfile);
+    bool changeLog(project::Info const& info, std::string const& logfile);
 
     //! \brief Log in the style of C++.
     ILogger& operator<<(const Severity& severity);
@@ -113,11 +131,16 @@ private:
 
 private:
 
+    project::Info m_info;
     std::ofstream m_file;
 };
 
+// FIXME dans ::instance()
 #  define SHORT_FILENAME File::fileName(__FILE__).c_str()
 
+#  define CONFIG_LOG(info) tool::log::Logger::instance().changeLog(info, info.log_path)
+
+// FIXME a desactiver when NDEBUG
 //! \brief Log C++ like. Example:  CPP_LOG(tool::log::Fatal) << "test\n";
 #  define CPP_LOG(severity, ...)                                        \
     tool::log::Logger::instance() << tool::log::Logger::instance().strtime(); \
@@ -134,11 +157,13 @@ private:
 #  define LOGI(...) LOGI_HELPER(__VA_ARGS__, "")
 
 //! \brief Debug Log.
-#  define LOGD_HELPER(format, ...)                                      \
-    do { if (config::debug) {                                           \
-            tool::log::Logger::instance().log(nullptr, tool::log::Debug, "[%s::%d] " format, SHORT_FILENAME, __LINE__, __VA_ARGS__); \
-        } } while (0)
-#  define LOGD(...) LOGD_HELPER(__VA_ARGS__, "")
+#  if defined(NDEBUG)
+#    define LOGD(...) {}
+#  else
+#    define LOGD_HELPER(format, ...)                                      \
+    do { tool::log::Logger::instance().log(nullptr, tool::log::Debug, "[%s::%d] " format, SHORT_FILENAME, __LINE__, __VA_ARGS__); } while (0)
+#    define LOGD(...) LOGD_HELPER(__VA_ARGS__, "")
+#  endif
 
 //! \brief Warning Log.
 #  define LOGW_HELPER(format, ...)                                      \

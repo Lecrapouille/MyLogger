@@ -22,35 +22,6 @@
 #include "MyLogger/File.hpp"
 #include <cstring>
 
-#if defined(_WIN32) || defined(__APPLE__)
-// Undefined symbols are not supported by Windows or Mac OS X
-// while accepted by Linux.
-namespace config
-{
-  //! \brief Compiled in debug or released mode
-  bool debug __attribute__((weak));
-  //! \brief Used for logs and GUI.
-  std::string project_name __attribute__((weak));
-  //! \brief Major version of project
-  uint32_t major_version __attribute__((weak));
-  //! \brief Minor version of project
-  uint32_t minor_version __attribute__((weak));
-  //! \brief Save the git SHA1
-  std::string git_sha1 __attribute__((weak));
-  //! \brief Save the git branch
-  std::string git_branch __attribute__((weak));
-  //! \brief Pathes where default project resources have been installed
-  //! (when called  by the shell command: sudo make install).
-  std::string data_path __attribute__((weak));
-  //! \brief Location for storing temporary files
-  std::string tmp_path __attribute__((weak));
-  //! \brief Give a name to the default project log file.
-  std::string log_name __attribute__((weak));
-  //! \brief Define the full path for the project.
-  std::string log_path __attribute__((weak));
-}
-#endif
-
 namespace tool { namespace log {
 
 //------------------------------------------------------------------------------
@@ -72,21 +43,24 @@ static const char *c_str_severity[Severity::MaxLoggerSeverity + 1] =
 #pragma GCC diagnostic pop
 
 //------------------------------------------------------------------------------
-Logger::Logger(std::string const& filename)
+Logger::Logger(project::Info const& info, std::string const& logfile)
+    : m_info(info)
 {
-    open(filename);
-}
-
-//------------------------------------------------------------------------------
-Logger::Logger()
-{
-    open(config::log_path);
+    open(logfile);
 }
 
 //------------------------------------------------------------------------------
 Logger::~Logger()
 {
     close();
+}
+
+//------------------------------------------------------------------------------
+bool Logger::changeLog(project::Info const& info, std::string const& logfile)
+{
+    m_info = info;
+    close();
+    return open(logfile);
 }
 
 //------------------------------------------------------------------------------
@@ -104,7 +78,7 @@ bool Logger::open(std::string const& logfile)
     std::string file(logfile);
     if (dir.empty())
     {
-        dir = config::tmp_path;
+        dir = m_info.tmp_path;
         file = dir + file;
     }
 
@@ -112,7 +86,7 @@ bool Logger::open(std::string const& logfile)
     if (!File::mkdir(dir))
     {
         std::cerr << "Failed creating the temporary directory '"
-                  << config::tmp_path << "'" << std::endl;
+                  << m_info.tmp_path << "'" << std::endl;
         return false;
     }
 
@@ -178,13 +152,13 @@ void Logger::header()
         "  git branch: %s\n"
         "  git SHA1: %s\n"
         "======================================================\n\n",
-        config::project_name.c_str(),
-        config::debug ? "Debug" : "Release",
-        config::major_version,
-        config::minor_version,
+        m_info.project_name.c_str(),
+        m_info.debug ? "Debug" : "Release",
+        m_info.major_version,
+        m_info.minor_version,
         m_buffer_time,
-        config::git_branch.c_str(),
-        config::git_sha1.c_str());
+        m_info.git_branch.c_str(),
+        m_info.git_sha1.c_str());
 }
 
 //------------------------------------------------------------------------------
@@ -194,7 +168,7 @@ void Logger::footer()
     log("\n======================================================\n"
         "  %s log closed at %s\n"
         "======================================================\n\n",
-        config::project_name.c_str(),
+        m_info.project_name.c_str(),
         m_buffer_time);
 }
 
