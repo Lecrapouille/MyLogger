@@ -82,7 +82,7 @@ check: unit-tests
 ###################################################
 # Install project. You need to be root.
 .PHONY: install
-install: $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) $(PKG_FILE)
+install: $(STATIC_LIB_TARGET) $(SHARED_LIB_TARGET) pkg-config
 	@$(call INSTALL_DOCUMENTATION)
 	@$(call INSTALL_PROJECT_LIBRARIES)
 	@$(call INSTALL_PROJECT_HEADERS)
