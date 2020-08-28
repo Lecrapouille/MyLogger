@@ -32,7 +32,7 @@
 #undef protected
 #undef private
 
-#include "build/project_info.hpp"
+#include "project_info.hpp"
 
 using namespace tool::log;
 static const uint32_t header_footer_lines = 6U + 5U;

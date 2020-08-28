@@ -45,6 +45,7 @@ branches:
 
 before_install:
  - cd "${TRAVIS_BUILD_DIR}"
+ - set SUDO=sudo
  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./.integration/travis-install-linux.sh ; fi
  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./.integration/travis-install-osx.sh ; fi
 

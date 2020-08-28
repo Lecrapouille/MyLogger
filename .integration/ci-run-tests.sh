@@ -33,8 +33,8 @@ make compile-external-libs || exit 1
 # Build the project
 V=1 make CXX=$COMPILER $JCORES || exit 1
 
-# install the executable and check if installed files exist.
-sudo make install DESTDIR=$CI_DESTDIR $JCORES || exit 1
+# Install the executable and check if installed files exist.
+$SUDO make install DESTDIR=$CI_DESTDIR $JCORES || exit 1
 VERSION=`cat VERSION`
 file_exists $CI_DESTDIR/usr/lib/libmylogger.a || exit 1
 if [[ $TRAVIS_OS_NAME == "linux" ]]; then file_exists $CI_DESTDIR/usr/lib/libmylogger.so || exit 1 ; fi
@@ -52,8 +52,11 @@ file_exists $CI_DESTDIR/usr/share/$EXEC/$VERSION/README.md || exit 1
 dir_exists $CI_DESTDIR/usr/include/$EXEC-$VERSION/$EXEC || exit 1
 file_exists $CI_DESTDIR/usr/include/$EXEC-$VERSION/$EXEC/Logger.hpp || exit 1
 
+# Build examples
+(cd examples && V=1 make $JCORES) || exit 1
+
 # Build unit tests and non-regression tests
-(cd tests && V=1 make check $JCORES) || exit 1
+(cd tests && V=1 make check DESTDIR=$CI_DESTDIR $JCORES) || exit 1
 
 # Check if the library can be linked against a project
 git clone https://github.com/Lecrapouille/LinkAgainstMyLibs.git --recurse-submodules --depth=1

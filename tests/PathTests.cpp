@@ -33,7 +33,7 @@ TEST(PathTests, EmptyConstructor)
 {
   Path path;
 
-  ASSERT_EQ(0, path.m_search_paths.size());
+  ASSERT_EQ(0u, path.m_search_paths.size());
   ASSERT_EQ(':', path.m_delimiter);
   ASSERT_EQ(true, path.m_string_path == "");
 }

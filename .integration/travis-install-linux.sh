@@ -3,10 +3,10 @@
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:/usr/local/lib64:/usr/local/lib/
 sudo apt-get -qq update
 
-### Global packages
-sudo apt-get install -y git cmake bc libdw-dev
+### Install global packages
+sudo apt-get install -y git cmake make libdw-dev pkg-config bc
 
-### Report code coverage to github service coveralls
+### Install the code coverage reporter (GitHub service coveralls)
 sudo gem install coveralls-lcov
 
 ### Install the newer lcov (>= 1.14) because default lcov 1.13 does not support gcc >= 8

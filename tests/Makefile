@@ -25,7 +25,6 @@ PROJECT = MyLogger
 TARGET = $(PROJECT)-UnitTest
 DESCRIPTION = Unit tests for $(PROJECT)
 BUILD_TYPE = debug
-DEFINES += -Wno-unused-function
 
 ###################################################
 # Location of the project directory and Makefiles
@@ -43,7 +42,7 @@ OBJS  += FileTests.o PathTests.o LoggerTests.o main.o
 ###################################################
 # Project defines
 #
-DEFINES +=
+DEFINES += -Wno-unused-function -Wno-undef
 
 ###################################################
 # Compilation options.
@@ -54,8 +53,7 @@ PKG_LIBS += gtest gmock
 # Code coverage. Comment these lines if coveraging
 # is not desired.
 #
-COMPIL_FLAGS += --coverage
-LINKER_FLAGS += --coverage
+LINKER_FLAGS +=
 
 ###################################################
 # Inform Makefile where to find header files
