@@ -24,13 +24,15 @@
 #include <iterator>
 #include <cstring>
 
+#define SINGLETON_FOR_LOGGER Singleton<Logger>
+
 #define protected public
 #define private public
 #  include "MyLogger/Logger.hpp"
 #undef protected
 #undef private
 
-#include "config.hpp"
+#include "build/project_info.hpp"
 
 using namespace tool::log;
 static const uint32_t header_footer_lines = 6U + 5U;
@@ -73,7 +75,9 @@ TEST(LoggerTests, testEmptyLog)
     constexpr uint32_t num_threads = 0U;
     constexpr uint32_t lines_by_thread = 0U;
 
-    Logger::instance().changeLog("/tmp/empty.log");
+    EXPECT_THAT(true, Logger::instance().changeLog("/tmp/empty.log"));
+    ASSERT_STREQ(Logger::instance().m_info.log_name.c_str(), "empty.log");
+    ASSERT_STREQ(Logger::instance().m_info.log_path.c_str(), "/tmp/empty.log");
     Logger::destroy();
 
     uint32_t lines = number_of_lines("/tmp/empty.log");
@@ -88,19 +92,23 @@ TEST(LoggerTests, testBasic)
 
     // Change log with a full path
     EXPECT_THAT(true, Logger::instance().changeLog("/tmp/foo/bar/new.log"));
+    ASSERT_STREQ(Logger::instance().m_info.log_name.c_str(), "new.log");
+    ASSERT_STREQ(Logger::instance().m_info.log_path.c_str(), "/tmp/foo/bar/new.log");
     CPP_LOG(Fatal) << "test\n";
     LOGE("Coucou");
     Logger::destroy();
     uint32_t lines = number_of_lines("/tmp/foo/bar/new.log");
     ASSERT_EQ(num_threads * lines_by_thread + header_footer_lines, lines);
 
-    // Chnage log with a simple file name
+    // Change log with a simple file name
     EXPECT_THAT(true, Logger::instance().changeLog("simplefile.log"));
+    ASSERT_STREQ(Logger::instance().m_info.log_name.c_str(), "simplefile.log");
+    ASSERT_STREQ(Logger::instance().m_info.log_path.c_str(), "simplefile.log");
     CPP_LOG(Warning) << "test2\n";
     LOGD("Coucou");
     LOGW("TEST");
     Logger::destroy();
-    lines = number_of_lines(config::tmp_path + "simplefile.log");
+    lines = number_of_lines("simplefile.log");
     ASSERT_EQ(num_threads * (lines_by_thread + 1) + header_footer_lines, lines);
   }
 
@@ -110,7 +118,7 @@ TEST(LoggerTests, testWithConcurrency)
     constexpr uint32_t num_threads = 10U;
     constexpr uint32_t lines_by_thread = 10U;
 
-    Logger::instance();
+    Logger::instance().changeLog(project::info);
 
     static std::thread t[num_threads];
 
@@ -131,6 +139,6 @@ TEST(LoggerTests, testWithConcurrency)
     Logger::destroy();
 
     // Check: count the number of lines == num_threads + header + footer
-    uint32_t lines = number_of_lines(config::log_path);
+    uint32_t lines = number_of_lines(project::info.log_path);
     ASSERT_EQ(num_threads * lines_by_thread + header_footer_lines, lines);
   }

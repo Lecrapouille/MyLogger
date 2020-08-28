@@ -71,15 +71,18 @@ struct Info
 
 } // namespace project
 
+#ifndef SINGLETON_FOR_LOGGER
+#  define SINGLETON_FOR_LOGGER LongLifeSingleton<Logger>
+#endif
 
 namespace tool { namespace log {
 
 // *****************************************************************************
 //! \brief File Logger service. Manage a single file.
 // *****************************************************************************
-class Logger: public IFileLogger, public LongLifeSingleton<Logger>
+class Logger: public IFileLogger, public SINGLETON_FOR_LOGGER
 {
-    friend class LongLifeSingleton<Logger>;
+    friend class SINGLETON_FOR_LOGGER;
 
 public:
 
@@ -87,15 +90,14 @@ public:
 
     //! \brief Open the file.
     //! \param info structure holding all project information (name, version ...)
-    //! \param logfile the path where to create the file
-    Logger(project::Info const& info, std::string const& filename);
+    Logger(project::Info const& info);
 
     //! \brief Close the file.
     virtual ~Logger();
 
     //! \brief Reopen the log (old content is removed).
-    bool changeLog(std::string const& logfile);
-    bool changeLog(project::Info const& info, std::string const& logfile);
+    bool changeLog(project::Info const& info);
+    bool changeLog(std::string const& filename);
 
     //! \brief Log in the style of C++.
     ILogger& operator<<(const Severity& severity);
@@ -138,7 +140,7 @@ private:
 // FIXME dans ::instance()
 #  define SHORT_FILENAME File::fileName(__FILE__).c_str()
 
-#  define CONFIG_LOG(info) tool::log::Logger::instance().changeLog(info, info.log_path)
+#  define CONFIG_LOG(info) tool::log::Logger::instance().changeLog(info)
 
 // FIXME a desactiver when NDEBUG
 //! \brief Log C++ like. Example:  CPP_LOG(tool::log::Fatal) << "test\n";

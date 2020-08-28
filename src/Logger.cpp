@@ -43,10 +43,10 @@ static const char *c_str_severity[Severity::MaxLoggerSeverity + 1] =
 #pragma GCC diagnostic pop
 
 //------------------------------------------------------------------------------
-Logger::Logger(project::Info const& info, std::string const& logfile)
+Logger::Logger(project::Info const& info)
     : m_info(info)
 {
-    open(logfile);
+    open(m_info.log_path);
 }
 
 //------------------------------------------------------------------------------
@@ -56,18 +56,24 @@ Logger::~Logger()
 }
 
 //------------------------------------------------------------------------------
-bool Logger::changeLog(project::Info const& info, std::string const& logfile)
+bool Logger::changeLog(project::Info const& info)
 {
-    m_info = info;
     close();
-    return open(logfile);
+    m_info = info;
+    return open(m_info.log_path);
 }
 
 //------------------------------------------------------------------------------
-bool Logger::changeLog(std::string const& logfile)
+bool Logger::changeLog(std::string const& logpath)
 {
     close();
-    return open(logfile);
+    m_info.log_path = logpath;
+    m_info.log_name = File::fileName(logpath);
+    if (m_info.log_name.empty())
+    {
+        m_info.log_name = "log.txt";
+    }
+    return open(m_info.log_path);
 }
 
 //------------------------------------------------------------------------------
@@ -92,7 +98,7 @@ bool Logger::open(std::string const& logfile)
 
     // Try to open the given log path
     m_file.open(file.c_str());
-    if (!m_file.is_open())
+    if (!m_file)
     {
         std::cerr << "Failed creating the log file '"
                   << file << "'. Reason is '"
@@ -112,7 +118,7 @@ bool Logger::open(std::string const& logfile)
 //------------------------------------------------------------------------------
 void Logger::close()
 {
-    if (!m_file.is_open())
+    if (!m_file)
         return ;
 
     footer();
@@ -128,7 +134,7 @@ void Logger::write(const char *message, const int /*length*/)
         m_stream->flush();
     }
 
-    if (!m_file.is_open())
+    if (!m_file)
         return ;
 
     m_file << message;

@@ -35,8 +35,10 @@
 #  ifdef _WIN32
 #    include <direct.h>
 #    define MKDIR(p, m) (void) m, ::_mkdir(p)
+#    define DIR_SEP '\\'
 #  else
 #    define MKDIR(p, m) ::mkdir(p, m)
+#    define DIR_SEP '/'
 #  endif
 
 // **************************************************************
@@ -149,7 +151,7 @@ public:
     //! \brief Get the directory name of a path.
     //!
     //! \note the path is considered refering to a file not to a directory
-    //! except if a '/' is set at the end of the name.
+    //! except if a '/' or '\\' is set at the end of the name.
     //!
     //! Examples:
     //!  - dirName("/tmp/") will return dirName("/tmp/")
@@ -209,8 +211,8 @@ public:
 
         while (iter != end)
         {
-            std::string::const_iterator new_iter = std::find(iter, end, '/');
-            std::string new_path = '/' + std::string(begin, new_iter);
+            std::string::const_iterator new_iter = std::find(iter, end, DIR_SEP);
+            std::string new_path = DIR_SEP + std::string(begin, new_iter);
 
             if (stat(new_path.c_str(), &st) != 0)
             {
