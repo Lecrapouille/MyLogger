@@ -1,12 +1,7 @@
 # MyLogger
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://github.com/Lecrapouille/MyLogger/blob/master/LICENSE)
-[![codecov](https://codecov.io/gh/Lecrapouille/MyLogger/branch/master/graph/badge.svg)](https://codecov.io/gh/Lecrapouille/MyLogger)
-[![coveralls](https://coveralls.io/repos/github/Lecrapouille/MyLogger/badge.svg?branch=master)](https://coveralls.io/github/Lecrapouille/MyLogger?branch=master)
-
-|Branch     | **`Linux/Mac OS`** | **`Windows`** |
-|-----------|------------------|-------------|
-|master     |[![Build Status](https://travis-ci.org/Lecrapouille/MyLogger.svg?branch=master)](https://travis-ci.org/Lecrapouille/MyLogger)|[![Build status](https://ci.appveyor.com/api/projects/status/github/lecrapouille/MyLogger?svg=true)](https://ci.appveyor.com/project/Lecrapouille/MyLogger)||
+[![CI testing](https://github.com/Lecrapouille/MyLogger/actions/workflows/ci.yml/badge.svg)](https://github.com/Lecrapouille/MyLogger/actions/workflows/ci.yml)
 
 [MyLogger](https://github.com/Lecrapouille/MyLogger)
 is an ultra basic but thread safe file logger used for my GitHub C++ projects.
