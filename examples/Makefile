@@ -24,7 +24,7 @@
 PROJECT = MyLogger
 TARGET = MyLoggerExample
 DESCRIPTION = Example for $(PROJECT)
-BUILD_TYPE = debug
+BUILD_TYPE = release
 
 ###################################################
 # Location of the project directory and Makefiles
