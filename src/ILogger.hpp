@@ -22,12 +22,8 @@
 #  define MYLOGGER_ILOGGER_HPP
 
 #  include <mutex>
-#  include <stdarg.h>
 #  include <fstream>
-#  include <cassert>
 #  include <sstream>
-#  include <string>
-#  include <iostream>
 
 namespace tool { namespace log {
 

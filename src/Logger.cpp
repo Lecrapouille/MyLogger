@@ -20,7 +20,6 @@
 
 #include "MyLogger/Logger.hpp"
 #include "MyLogger/File.hpp"
-#include <cstring>
 
 namespace tool { namespace log {
 

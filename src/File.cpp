@@ -20,7 +20,6 @@
 
 #include "MyLogger/File.hpp"
 #include "MyLogger/Logger.hpp"
-#include <fstream>
 
 //------------------------------------------------------------------
 //! \param filename the file path to read.

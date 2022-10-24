@@ -19,7 +19,7 @@
 //=====================================================================
 
 #include "ILogger.hpp"
-#include <cstring>
+#include <cstdarg>
 
 namespace tool { namespace log {
 
