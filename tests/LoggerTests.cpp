@@ -34,6 +34,33 @@
 
 #include "project_info.hpp"
 
+namespace project
+{
+  static Info info2(
+    // Compiled in debug or released mode
+    true,
+    // Project name used for logs and GUI.
+    "MyLoggerExample",
+    // Major version of project
+    0u,
+    // Minor version of project
+    1u,
+    // git SHA1
+    "3a2b3791f7cca5188259ae01d39c6194d2708c9f",
+    // git branch
+    "master",
+    // Pathes where default project resources have been installed
+    // (when called  by the shell command: sudo make install).
+    "/home/qq/MyGitHub/MyLogger:/usr/share/MyLogger/0.1",
+    // Location for storing temporary files
+    "/tmp/MyLogger/",
+    // Give a name to the default project log file.
+    "MyLoggerExample.log",
+    // Define the full path for the project.
+    "/tmp/MyLogger/MyLoggerExample.log"
+  );
+}
+
 using namespace tool::log;
 static const uint32_t header_footer_lines = 6U + 5U;
 
@@ -118,7 +145,7 @@ TEST(LoggerTests, testWithConcurrency)
     constexpr uint32_t num_threads = 10U;
     constexpr uint32_t lines_by_thread = 10U;
 
-    Logger::instance().changeLog(project::info);
+    Logger::instance().changeLog(project::info2);
 
     static std::thread t[num_threads];
 
@@ -139,6 +166,6 @@ TEST(LoggerTests, testWithConcurrency)
     Logger::destroy();
 
     // Check: count the number of lines == num_threads + header + footer
-    uint32_t lines = number_of_lines(project::info.log_path);
+    uint32_t lines = number_of_lines(project::info2.log_path);
     ASSERT_EQ(num_threads * lines_by_thread + header_footer_lines, lines);
   }
