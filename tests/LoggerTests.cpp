@@ -61,7 +61,7 @@ namespace project
   );
 }
 
-using namespace tool::log;
+using namespace mylogger;
 static const uint32_t header_footer_lines = 6U + 5U;
 
 //--------------------------------------------------------------------------

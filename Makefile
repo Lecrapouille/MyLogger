@@ -48,7 +48,7 @@ VPATH += \
 ###################################################
 # Make the list of compiled files
 #
-LIB_OBJS = File.o Path.o ILogger.o Logger.o
+LIB_OBJS = ILogger.o Logger.o
 
 ###################################################
 # Project defines

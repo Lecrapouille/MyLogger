@@ -1,6 +1,6 @@
 #include <MyLogger/Logger.hpp>
 
-#if 1
+#if 0
 // Define some information needed by MyLogger
 namespace project
 {
@@ -39,7 +39,22 @@ namespace project
 // Compilation: g++ --std=c++11 main.cpp -o app `pkg-config --cflags --libs mylogger`
 int main()
 {
+#if 0
     CONFIG_LOG(project::info);
+#else
+    CONFIG_LOG(project::Info(
+        project::info::mode == project::info::debug,
+        project::info::application_name.c_str(),
+        project::info::major_version,
+        project::info::minor_version,
+        project::info::git_branch.c_str(),
+        project::info::git_sha1.c_str(),
+        project::info::data_path.c_str(),
+        project::info::tmp_path.c_str(),
+        project::info::log_name.c_str(),
+        project::info::log_path.c_str()
+    ));
+#endif
     LOGI("An information %s %d", "the info", 42);
     LOGD("A debug %s", "the debug"); // Displayed only if -UNDEBUG is passed to compiler
     LOGW("A warning %s", "the warning");

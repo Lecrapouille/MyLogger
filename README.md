@@ -5,11 +5,13 @@
 
 [MyLogger](https://github.com/Lecrapouille/MyLogger)
 is an ultra basic but thread safe file logger used for my GitHub C++ projects.
-This library also embeds utily classes such as filename and path manipulation.
 I used MyLogger for having logs in a file instead of poluting the console
-(stdout and stderr). This project has not been made for projects needing intensive
-log usages or complex logging mechanism (rolling, asynchrone logs ...) and as better
-alternative you can use https://github.com/gabime/spdlog instead.
+(stdout and stderr).
+
+Dear user, I do not recommend to use it, there are better alternative you can have
+using complex logging mechanism (rolling, asynchrone logs ...) i.e.
+https://github.com/gabime/spdlog instead. This project is here for solving
+some needs of mine.
 
 ## Prerequisite
 

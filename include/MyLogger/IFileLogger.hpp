@@ -1,5 +1,5 @@
 //=====================================================================
-// MyLogger: A GIS in a spreadsheet.
+// MyLogger: A basic logger.
 // Copyright 2018 Quentin Quadrat <lecrapouille@gmail.com>
 //
 // This file is part of MyLogger.
@@ -18,37 +18,33 @@
 // along with MyLogger.  If not, see <http://www.gnu.org/licenses/>.
 //=====================================================================
 
-#ifndef PATH_TESTS_HPP_
-#  define PATH_TESTS_HPP_
+#ifndef MYLOGGER_IFILELOGGER_HPP
+#  define MYLOGGER_IFILELOGGER_HPP
 
-#  include <cppunit/TestFixture.h>
-#  include <cppunit/TestResult.h>
-#  include <cppunit/extensions/HelperMacros.h>
+#  include "MyLogger/ILogger.hpp"
 
-#  define protected public
-#  define private public
-#  include "Path.hpp"
-#  undef protected
-#  undef private
+namespace mylogger {
 
-class PathTests : public CppUnit::TestFixture
+// *****************************************************************************
+//!  \brief Interface class for file loggers.
+// *****************************************************************************
+class IFileLogger: public ILogger
 {
-  // CppUnit macros for setting up the test suite
-  CPPUNIT_TEST_SUITE(PathTests);
-  CPPUNIT_TEST(testEmptyConstructor);
-  CPPUNIT_TEST(testSplitConstructor);
-  CPPUNIT_TEST(testSplitDir);
-  CPPUNIT_TEST(testFindAndExpand);
-  CPPUNIT_TEST_SUITE_END();
+private:
 
-public:
-  void setUp();
-  void tearDown();
+    //! \brief virtual method opening the media.
+    virtual bool open(std::string const& filename) = 0;
 
-  void testEmptyConstructor();
-  void testSplitConstructor();
-  void testSplitDir();
-  void testFindAndExpand();
+    //! \brief virtual method closing the media.
+    virtual void close() = 0;
+
+    //! \brief virtual method doing the header of the file.
+    virtual void header() = 0;
+
+    //! \brief virtual method doing the footer of the file.
+    virtual void footer() = 0;
 };
 
-#endif /* PATH_TESTS_HPP_ */
+} // namespace tool::log
+
+#endif // MYLOGGER_IFILELOGGER_HPP

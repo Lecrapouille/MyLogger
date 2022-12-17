@@ -21,12 +21,11 @@
 #ifndef MYLOGGER_FILE_HPP
 #  define MYLOGGER_FILE_HPP
 
+#  include <string.h>
+#  include <iostream>
 #  include <sys/stat.h>
 #  include <unistd.h>
-#  include <string.h>
 #  include <time.h>
-#  include <string>
-#  include <iostream>
 #  include <algorithm>
 
 // **************************************************************
@@ -41,70 +40,14 @@
 #    define DIR_SEP '/'
 #  endif
 
+namespace mylogger {
+
 // **************************************************************
 //! \brief Utility of file name manipulation
 // **************************************************************
 class File
 {
 public:
-
-    enum FileType { DoesNotExist, Directory, Document, UnknownType };
-
-    //--------------------------------------------------------------------------
-    //! \brief Check if a file exits. It gives just an information.
-    //!
-    //! Beware of race condition! Do not use this function for opening a file:
-    //! use instead the open() function and check the error code. Indeed,
-    //! the file may be deleted between this function and the open() function
-    //! because theses two functions will not be atomic.
-    //--------------------------------------------------------------------------
-    inline static bool exist(std::string const& path)
-    {
-        struct stat buffer;
-        return 0 == stat(path.c_str(), &buffer);
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Return the type of file.
-    //--------------------------------------------------------------------------
-    inline static FileType type(std::string const& path)
-    {
-        struct stat buffer;
-        if (0 == stat(path.c_str(), &buffer))
-        {
-            if (buffer.st_mode & S_IFDIR)
-            {
-                return Directory;
-            }
-            else if (buffer.st_mode & S_IFREG)
-            {
-                return Document;
-            }
-            return UnknownType;
-        }
-        return DoesNotExist;
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Return if a directory or a file is readable.
-    //--------------------------------------------------------------------------
-    inline static bool isReadable(std::string const& path)
-    {
-        return 0 == access(path.c_str(), R_OK);
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Return if a directory or a file is writable.
-    //--------------------------------------------------------------------------
-    inline static bool isWritable(std::string const& path)
-    {
-        return 0 == access(path.c_str(), W_OK);
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Read the whole file and store its content as string.
-    //--------------------------------------------------------------------------
-    static bool readAllFile(std::string const& filename, std::string& buffer);
 
     //--------------------------------------------------------------------------
     //! \brief give the file name with its extension from a given path
@@ -115,36 +58,6 @@ public:
         if (pos != std::string::npos)
             return path.substr(pos + 1, std::string::npos);
         return path;
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief give the file name without its extension from a given path
-    //--------------------------------------------------------------------------
-    inline static std::string baseName(std::string const& path)
-    {
-        std::string filename = fileName(path);
-        return filename.substr(0, filename.find_last_of("."));
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief give the file extension
-    //--------------------------------------------------------------------------
-    inline static std::string extension(std::string const& path)
-    {
-        std::string::size_type pos = path.find_last_of(".");
-        if (pos != std::string::npos)
-        {
-            std::string ext = path.substr(pos + 1, std::string::npos);
-
-            // Ignore the ~ in the extension (ie. foo.txt~)
-            if ('~' == ext.back())
-                ext.pop_back();
-
-            // Get the file extension in lower case
-            std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-            return ext;
-        }
-        return "";
     }
 
     //--------------------------------------------------------------------------
@@ -169,32 +82,6 @@ public:
             return path.substr(0, pos + 1);
         }
         return "";
-    }
-
-    //--------------------------------------------------------------------------
-    //! \brief Generate the name of a temporary file or directory. The name is
-    //! made with the current date. There is no garanty that directory does not
-    //! already exists, therefore you have to check it before calling mkdir().
-    //--------------------------------------------------------------------------
-    static std::string generateTempFileName(std::string const& root_path,
-                                            std::string const& extension = "")
-    {
-        char buffer_time[32];
-        std::string path(root_path);
-        time_t current_time = time(nullptr);
-
-        strftime(buffer_time, sizeof (buffer_time), "%Y-%m-%d/",
-                 localtime(&current_time));
-        path += buffer_time;
-
-        strftime(buffer_time, sizeof (buffer_time), "%Hh-%Mm-%Ss",
-                 localtime(&current_time));
-        path += buffer_time;
-
-        // Optionaly: file extension
-        path += extension;
-
-        return path;
     }
 
     //--------------------------------------------------------------------------
@@ -243,5 +130,7 @@ public:
         return true;
     }
 };
+
+} // namespace namespace mylogger
 
 #endif // MYLOGGER_FILE_HPP

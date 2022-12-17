@@ -21,7 +21,7 @@
 #include "MyLogger/Logger.hpp"
 #include "MyLogger/File.hpp"
 
-namespace tool { namespace log {
+namespace mylogger {
 
 //------------------------------------------------------------------------------
 #pragma GCC diagnostic push
@@ -191,4 +191,4 @@ ILogger& Logger::operator<<(const char *msg)
     return *this;
 }
 
-} } // namespace tool::log
+} // namespace mylogger

@@ -25,7 +25,7 @@
 #  include <fstream>
 #  include <sstream>
 
-namespace tool { namespace log {
+namespace mylogger {
 
 // *****************************************************************************
 //! \brief Different severity enumerate
@@ -114,6 +114,6 @@ template <class T> ILogger& ILogger::operator<<(const T& to_log)
     return *this;
 }
 
-} } // namespace tool::log
+} // namespace mylogger
 
 #endif /* MYLOGGER_ILOGGER_HPP */

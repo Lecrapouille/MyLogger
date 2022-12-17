@@ -22,6 +22,8 @@
 #ifndef MYLOGGER_SINGLETON_TPP
 #  define MYLOGGER_SINGLETON_TPP
 
+namespace mylogger {
+
 // *****************************************************************************
 //! \brief Long-life singleton (use reference for returning the
 //! instance).
@@ -250,5 +252,7 @@ template <class T>
 T* volatile LazySingleton<T>::s_instance = nullptr;
 template <class T>
 SingletonDestroyer<T> LazySingleton<T>::s_destroyer;
+
+} // namespace mylogger
 
 #endif /* MYLOGGER_SINGLETON_TPP */

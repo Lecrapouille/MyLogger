@@ -36,8 +36,8 @@ include $(M)/Makefile.header
 ###################################################
 # List of files to compile.
 #
-OBJS  += File.o Path.o ILogger.o Logger.o
-OBJS  += FileTests.o PathTests.o LoggerTests.o main.o
+OBJS  += ILogger.o Logger.o
+OBJS  += LoggerTests.o main.o
 
 ###################################################
 # Project defines

@@ -18,10 +18,10 @@
 // along with MyLogger.  If not, see <http://www.gnu.org/licenses/>.
 //=====================================================================
 
-#include "ILogger.hpp"
+#include "MyLogger/ILogger.hpp"
 #include <cstdarg>
 
-namespace tool { namespace log {
+namespace mylogger {
 
 //------------------------------------------------------------------------------
 const char *ILogger::strtime()
@@ -86,4 +86,4 @@ void ILogger::log(const char* format, ...)
     write(m_buffer);
 }
 
-} } // namespace tool::log
+} // namespace mylogger
