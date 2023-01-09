@@ -32,33 +32,36 @@
 #undef protected
 #undef private
 
-#include "project_info.hpp"
+//#include "project_info.hpp"
 
-namespace project
+namespace mylogger
 {
-  static Info info2(
-    // Compiled in debug or released mode
-    true,
-    // Project name used for logs and GUI.
-    "MyLoggerExample",
-    // Major version of project
-    0u,
-    // Minor version of project
-    1u,
-    // git SHA1
-    "3a2b3791f7cca5188259ae01d39c6194d2708c9f",
-    // git branch
-    "master",
-    // Pathes where default project resources have been installed
-    // (when called  by the shell command: sudo make install).
-    "/home/qq/MyGitHub/MyLogger:/usr/share/MyLogger/0.1",
-    // Location for storing temporary files
-    "/tmp/MyLogger/",
-    // Give a name to the default project log file.
-    "MyLoggerExample.log",
-    // Define the full path for the project.
-    "/tmp/MyLogger/MyLoggerExample.log"
-  );
+  namespace project
+  {
+    static Info info2(
+      // Compiled in debug or released mode
+      true,
+      // Project name used for logs and GUI.
+      "MyLoggerExample",
+      // Major version of project
+      0u,
+      // Minor version of project
+      1u,
+      // git SHA1
+      "3a2b3791f7cca5188259ae01d39c6194d2708c9f",
+      // git branch
+      "master",
+      // Pathes where default project resources have been installed
+      // (when called  by the shell command: sudo make install).
+      "/home/qq/MyGitHub/MyLogger:/usr/share/MyLogger/0.1",
+      // Location for storing temporary files
+      "/tmp/MyLogger/",
+      // Give a name to the default project log file.
+      "MyLoggerExample.log",
+      // Define the full path for the project.
+      "/tmp/MyLogger/MyLoggerExample.log"
+    );
+  }
 }
 
 using namespace mylogger;

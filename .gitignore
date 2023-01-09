@@ -1,8 +1,9 @@
-# 
+#
 build
 examples/external
 tests/external
 tests/build
+tests/simplefile.log
 doc/coverage
 *~
 
