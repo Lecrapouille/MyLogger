@@ -1,0 +1,15 @@
+- Formatter mieux les lignes virer les [date][INFO]{json}
+- log: utiliser la syntaxe json opentrace
+- log: Cacher les includes de SFML socket dans log.h
+- log: Ajouter un header et un footer du project comme avant mais au format json => afficher dans un autre dock
+- ✅ viewer: ajouter menu: ouvrir log file
+- viewer: ajouter menu: server, port UDP ...
+- ✅ Dock ne sauve pas la position des dock dans le fichier ini
+- ✅ Deplacer bouton "Reset zoom" dans le menu view
+- ✅ Les min et max duration ne fonctionnent pas (FIXED: filtres de durée, service et opération maintenant appliqués)
+- ~~Filters service et operation ne fonctionnent pas (utiliser des regex)~~
+- ✅ Virer span height
+- ✅ minimap affiche mal les spans
+- la vue n'affiche pas tous les Y, KO quand la fenetre est redimensionnée
+- ✅ filtre sur le temps
+- Coloriser les spans en fonctions du level: info, warning, error ...

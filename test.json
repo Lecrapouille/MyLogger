@@ -1,0 +1,510 @@
+{
+    "traces": [
+        {
+            "traceId": "trace-001-complex",
+            "traceName": "E-commerce Order Processing",
+            "spans": [
+                {
+                    "spanId": "span-001",
+                    "operationName": "POST /api/orders",
+                    "serviceName": "api-gateway",
+                    "startTime": 0.0,
+                    "duration": 1250.5,
+                    "depth": 0,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.url",
+                            "value": "/api/orders"
+                        },
+                        {
+                            "key": "user.id",
+                            "value": "user-12345"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-002",
+                    "operationName": "validateOrder",
+                    "serviceName": "order-service",
+                    "startTime": 12.3,
+                    "duration": 85.7,
+                    "depth": 1,
+                    "tags": [
+                        {
+                            "key": "order.id",
+                            "value": "order-67890"
+                        },
+                        {
+                            "key": "validation.type",
+                            "value": "schema"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-003",
+                    "operationName": "checkInventory",
+                    "serviceName": "inventory-service",
+                    "startTime": 105.1,
+                    "duration": 234.8,
+                    "depth": 1,
+                    "tags": [
+                        {
+                            "key": "product.count",
+                            "value": "3"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-004",
+                    "operationName": "queryProductStock",
+                    "serviceName": "inventory-service",
+                    "startTime": 115.5,
+                    "duration": 45.2,
+                    "depth": 2,
+                    "tags": [
+                        {
+                            "key": "product.id",
+                            "value": "prod-001"
+                        },
+                        {
+                            "key": "warehouse.id",
+                            "value": "wh-paris"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-005",
+                    "operationName": "SELECT stock",
+                    "serviceName": "inventory-db",
+                    "startTime": 125.8,
+                    "duration": 28.4,
+                    "depth": 3,
+                    "tags": [
+                        {
+                            "key": "db.statement",
+                            "value": "SELECT stock_quantity FROM inventory WHERE product_id = ?"
+                        },
+                        {
+                            "key": "db.type",
+                            "value": "postgresql"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-006",
+                    "operationName": "queryProductStock",
+                    "serviceName": "inventory-service",
+                    "startTime": 170.3,
+                    "duration": 52.1,
+                    "depth": 2,
+                    "tags": [
+                        {
+                            "key": "product.id",
+                            "value": "prod-002"
+                        },
+                        {
+                            "key": "warehouse.id",
+                            "value": "wh-lyon"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-007",
+                    "operationName": "SELECT stock",
+                    "serviceName": "inventory-db",
+                    "startTime": 178.7,
+                    "duration": 35.9,
+                    "depth": 3,
+                    "tags": [
+                        {
+                            "key": "db.statement",
+                            "value": "SELECT stock_quantity FROM inventory WHERE product_id = ?"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-008",
+                    "operationName": "reserveStock",
+                    "serviceName": "inventory-service",
+                    "startTime": 230.2,
+                    "duration": 95.6,
+                    "depth": 2,
+                    "tags": [
+                        {
+                            "key": "reservation.id",
+                            "value": "res-789"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-009",
+                    "operationName": "BEGIN TRANSACTION",
+                    "serviceName": "inventory-db",
+                    "startTime": 238.1,
+                    "duration": 2.1,
+                    "depth": 3,
+                    "tags": [
+                        {
+                            "key": "db.operation",
+                            "value": "transaction_begin"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-010",
+                    "operationName": "UPDATE stock",
+                    "serviceName": "inventory-db",
+                    "startTime": 245.5,
+                    "duration": 67.3,
+                    "depth": 3,
+                    "tags": [
+                        {
+                            "key": "db.statement",
+                            "value": "UPDATE inventory SET stock_quantity = stock_quantity - ? WHERE product_id = ?"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-011",
+                    "operationName": "COMMIT",
+                    "serviceName": "inventory-db",
+                    "startTime": 318.2,
+                    "duration": 5.4,
+                    "depth": 3,
+                    "tags": [
+                        {
+                            "key": "db.operation",
+                            "value": "transaction_commit"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-012",
+                    "operationName": "calculatePrice",
+                    "serviceName": "pricing-service",
+                    "startTime": 350.8,
+                    "duration": 156.3,
+                    "depth": 1,
+                    "tags": [
+                        {
+                            "key": "pricing.strategy",
+                            "value": "dynamic"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-013",
+                    "operationName": "getCustomerTier",
+                    "serviceName": "customer-service",
+                    "startTime": 365.2,
+                    "duration": 78.9,
+                    "depth": 2,
+                    "tags": [
+                        {
+                            "key": "customer.id",
+                            "value": "cust-456"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-014",
+                    "operationName": "SELECT customer",
+                    "serviceName": "customer-db",
+                    "startTime": 375.1,
+                    "duration": 45.6,
+                    "depth": 3,
+                    "tags": [
+                        {
+                            "key": "db.statement",
+                            "value": "SELECT tier, loyalty_points FROM customers WHERE id = ?"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-015",
+                    "operationName": "calculateLoyaltyDiscount",
+                    "serviceName": "customer-service",
+                    "startTime": 425.8,
+                    "duration": 15.2,
+                    "depth": 3,
+                    "tags": [
+                        {
+                            "key": "loyalty.points",
+                            "value": "2500"
+                        },
+                        {
+                            "key": "discount.percent",
+                            "value": "5"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-016",
+                    "operationName": "applyDiscounts",
+                    "serviceName": "pricing-service",
+                    "startTime": 450.3,
+                    "duration": 42.1,
+                    "depth": 2,
+                    "tags": [
+                        {
+                            "key": "discount.total",
+                            "value": "12.50"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-017",
+                    "operationName": "processPayment",
+                    "serviceName": "payment-service",
+                    "startTime": 520.7,
+                    "duration": 445.2,
+                    "depth": 1,
+                    "tags": [
+                        {
+                            "key": "payment.method",
+                            "value": "credit_card"
+                        },
+                        {
+                            "key": "amount",
+                            "value": "127.50"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-018",
+                    "operationName": "validateCard",
+                    "serviceName": "payment-gateway",
+                    "startTime": 535.1,
+                    "duration": 234.8,
+                    "depth": 2,
+                    "tags": [
+                        {
+                            "key": "card.type",
+                            "value": "visa"
+                        },
+                        {
+                            "key": "card.last4",
+                            "value": "1234"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-019",
+                    "operationName": "HTTP POST /validate",
+                    "serviceName": "bank-api",
+                    "startTime": 545.6,
+                    "duration": 198.3,
+                    "depth": 3,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "bank.code",
+                            "value": "BNP"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-020",
+                    "operationName": "fraud_detection",
+                    "serviceName": "bank-api",
+                    "startTime": 555.2,
+                    "duration": 145.7,
+                    "depth": 4,
+                    "tags": [
+                        {
+                            "key": "fraud.score",
+                            "value": "0.15"
+                        },
+                        {
+                            "key": "fraud.status",
+                            "value": "approved"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-021",
+                    "operationName": "ml_model_inference",
+                    "serviceName": "fraud-ml-service",
+                    "startTime": 565.8,
+                    "duration": 89.4,
+                    "depth": 5,
+                    "tags": [
+                        {
+                            "key": "model.version",
+                            "value": "v2.1.3"
+                        },
+                        {
+                            "key": "inference.time_ms",
+                            "value": "89.4"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-022",
+                    "operationName": "feature_extraction",
+                    "serviceName": "fraud-ml-service",
+                    "startTime": 570.1,
+                    "duration": 25.3,
+                    "depth": 6,
+                    "tags": [
+                        {
+                            "key": "features.count",
+                            "value": "47"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-023",
+                    "operationName": "model_prediction",
+                    "serviceName": "fraud-ml-service",
+                    "startTime": 600.8,
+                    "duration": 54.4,
+                    "depth": 6,
+                    "tags": [
+                        {
+                            "key": "prediction.confidence",
+                            "value": "0.92"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-024",
+                    "operationName": "chargeCard",
+                    "serviceName": "payment-gateway",
+                    "startTime": 780.5,
+                    "duration": 156.8,
+                    "depth": 2,
+                    "tags": [
+                        {
+                            "key": "transaction.id",
+                            "value": "txn-abc123"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-025",
+                    "operationName": "createOrder",
+                    "serviceName": "order-service",
+                    "startTime": 975.2,
+                    "duration": 189.4,
+                    "depth": 1,
+                    "tags": [
+                        {
+                            "key": "order.status",
+                            "value": "confirmed"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-026",
+                    "operationName": "INSERT order",
+                    "serviceName": "order-db",
+                    "startTime": 985.7,
+                    "duration": 67.2,
+                    "depth": 2,
+                    "tags": [
+                        {
+                            "key": "db.statement",
+                            "value": "INSERT INTO orders (id, customer_id, total, status) VALUES (?, ?, ?, ?)"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-027",
+                    "operationName": "sendConfirmationEmail",
+                    "serviceName": "notification-service",
+                    "startTime": 1060.1,
+                    "duration": 95.8,
+                    "depth": 2,
+                    "tags": [
+                        {
+                            "key": "email.template",
+                            "value": "order_confirmation"
+                        },
+                        {
+                            "key": "email.recipient",
+                            "value": "customer@example.com"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "span-028",
+                    "operationName": "SMTP send",
+                    "serviceName": "email-gateway",
+                    "startTime": 1070.5,
+                    "duration": 78.3,
+                    "depth": 3,
+                    "tags": [
+                        {
+                            "key": "smtp.server",
+                            "value": "smtp.company.com"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "traceId": "trace-002-search",
+            "traceName": "Product Search Query",
+            "spans": [
+                {
+                    "spanId": "search-001",
+                    "operationName": "GET /api/search",
+                    "serviceName": "search-api",
+                    "startTime": 0.0,
+                    "duration": 156.7,
+                    "depth": 0,
+                    "tags": [
+                        {
+                            "key": "search.query",
+                            "value": "laptop gaming"
+                        },
+                        {
+                            "key": "search.filters",
+                            "value": "price:500-2000,brand:asus"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "search-002",
+                    "operationName": "elasticSearch",
+                    "serviceName": "elasticsearch",
+                    "startTime": 15.3,
+                    "duration": 89.2,
+                    "depth": 1,
+                    "tags": [
+                        {
+                            "key": "es.index",
+                            "value": "products"
+                        },
+                        {
+                            "key": "es.hits",
+                            "value": "247"
+                        }
+                    ]
+                },
+                {
+                    "spanId": "search-003",
+                    "operationName": "enrichResults",
+                    "serviceName": "product-service",
+                    "startTime": 110.8,
+                    "duration": 35.4,
+                    "depth": 1,
+                    "tags": [
+                        {
+                            "key": "enrichment.type",
+                            "value": "pricing_availability"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

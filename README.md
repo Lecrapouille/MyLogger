@@ -1,118 +1,91 @@
 # MyLogger
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://github.com/Lecrapouille/MyLogger/blob/master/LICENSE)
-[![CI testing](https://github.com/Lecrapouille/MyLogger/actions/workflows/ci.yml/badge.svg)](https://github.com/Lecrapouille/MyLogger/actions/workflows/ci.yml)
-
 [MyLogger](https://github.com/Lecrapouille/MyLogger)
-is an ultra basic but thread safe file logger used for my GitHub C++ projects.
-I used MyLogger for having logs in a file instead of poluting the console
-(stdout and stderr).
+is an ultra-basic but thread-safe file logger and tracer used for my GitHub C++ projects.
+I initially created MyLogger to have logs in a file instead of polluting the console with
+stdout and stderr. Now, after working at several companies where logs were unusable for investigating
+issues and after watching the CppCon 2018: Steven Simpson [Source Instrumentation for Monitoring C++ in Production](https://www.youtube.com/watch?v=0WgC5jnrRx8) and testing [Jaeger](https://www.jaegertracing.io/)
+and being disappointed, I wanted to renew this logging library to implement mine own tracer.
 
-Dear user, I do not recommend to use it, there are better alternative you can have
-using complex logging mechanism (rolling, asynchrone logs ...) i.e.
-https://github.com/gabime/spdlog instead. This project is here for solving
-some needs of mine.
+**Warning:** This rebirth of the library is still experimental. The API will be modified and a complete proof of concept is not entirely achieved.
 
-## Prerequisite
+## Prerequisites
 
-https://github.com/Lecrapouille/MyMakefile downloaded as git submodule.
+- https://github.com/Lecrapouille/MyMakefile downloaded as a git submodule.
+- You need to install [SFML](https://www.sfml-dev.org/) for its socket abstraction.
+- Other third parties libraries are git cloned with `make download-external-libs`. They are linked against the project but are not installed directly to your operating system.
 
 ## Compilation and Installation
 
-```
+```bash
 git clone https://github.com/Lecrapouille/MyLogger.git --recurse-submodules
 cd MyLogger
-make
+make download-external-libs
+make -j8
+```
+
+You can change the default compiler by passing `CXX=` to make (e.g., `make CXX=clang++-7`).
+
+In all cases, two libraries (static and shared) and one standalone application will be created in the `build` folder. Optionally, you can install on your system:
+
+```bash
 sudo make install
 ```
 
-Two libraries (static and shared) have been created. You can change the default compiler by passing `CXX=` to make (ie `make CXX=clang++-7`).
+Two libraries, one standalone application, header files, docs, and demos will be installed on your
+operating system. The project will be installed in `/usr/share/MyLogger/0.3`,
+compiled libraries will be installed in `/usr/lib`, and header and include files will be installed in `/usr/include/MyLogger-0.3`.
 
-The project will be installed in `/usr/share/MyLogger/0.1`,
-compiled libraries will be installed in `/usr/lib`
-Header and include files will be installed in `/usr/include/MyLogger-0.1`.
+You can pass `DESTDIR` and `PREFIX` to `make install` to modify destination folders.
 
-You can pass `DESTDIR` and `PREFIX to` `make install` to modify destination folders.
+## Viewer
 
-## Example
+The log viewer is a standalone application that displays traces as timelines.
 
-See `tests/LoggerTests.cpp` for a threaded example.
-See `examples/main.cpp` for basic example:
+![viewer](doc/pics/Viewer.png)
 
-```
-#include <MyLogger/Logger.hpp>
+Currently, it can load log files. In the next version, it will open a port and listen for log messages.
 
-namespace project
-{
-  static Info info(
-    // Compiled in debug or released mode
-    true,
-    // Project name used for logs and GUI.
-    "MyLoggerExample",
-    // Major version of project
-    0u,
-    // Minor version of project
-    1u,
-    // git SHA1
-    "3a2b3791f7cca5188259ae01d39c6194d2708c9f",
-    // git branch
-    "master",
-    // Pathes where default project resources have been installed
-    // (when called  by the shell command: sudo make install).
-    "/home/qq/MyGitHub/MyLogger:/usr/share/MyLogger/0.1",
-    // Location for storing temporary files
-    "/tmp/MyLogger/",
-    // Give a name to the default project log file.
-    "MyLoggerExample.log",
-    // Define the full path for the project.
-    "/tmp/MyLogger/MyLoggerExample.log"
-  );
-}
+## Tracer Example
 
-// Compilation: g++ --std=c++11 main.cpp -o app `pkg-config --cflags --libs mylogger`.
-int main()
-{
-    CONFIG_LOG(project::info);
+See [demos](doc/demo) for complete examples on how to use the API.
 
-    LOGI("An information %s %d", "the info", 42);
-    LOGD("A debug %s", "the debug"); // Displayed only if -UNDEBUG is passed to compiler
-    LOGW("A warning %s", "the warning");
-    LOGF("A failure %s", "the failure");
+The `Logger` class is a logic-less class for logging. It needs some classes to implement behaviors:
 
-    return 0;
-}
+- for formatting a line of log. The current formatter will create JSON per line.
+- for formatting the header and footer of a log. The current file formatter will be associated with [MyMakefile](https://github.com/Lecrapouille/MyMakefile): it will add information about the project (description, SHA1, compilation mode, version, etc.)
+- for writing to a log. There are different pre-made writers: to write to console, to write to a file,
+or to send via socket.
+
+Here's a basic example:
+
+```c++
+// Create a line formatter
+auto line_formatter = std::make_unique<OpenTelemetryFormatter>("console-service", "1.0.0");
+
+// Create a file formatter that wraps the line formatter
+auto file_formatter = std::make_unique<OpenTelemetryFileFormatter>(*line_formatter, "console.log");
+
+// Create a console writer
+auto writer = std::make_unique<ConsoleLogWriter<OpenTelemetryFormatter>>(*line_formatter);
+
+// Create console logger
+using ConsoleWriterType = ConsoleLogWriter<OpenTelemetryFormatter>;
+using ConsoleLoggerType = Logger<ConsoleWriterType, OpenTelemetryFileFormatter, OpenTelemetryFormatter>;
+
+ConsoleLoggerType logger(std::move(writer), std::move(line_formatter), std::move(file_formatter));
 ```
 
-Console output:
+For each formatter, writer, and log level, you will need to include the header file.
 
-```
-Log created: '/tmp/MyLogger/MyLoggerExample.log'
-```
-
-Log content:
-
-```
-======================================================
-  MyLoggerExample Debug 0.1 - Event log - [2020/08/28]
-  git branch: master
-  git SHA1: 3a2b3791f7cca5188259ae01d39c6194d2708c9f
-======================================================
-
-[19:00:20][INFO][main.cpp::38] An information the info
-[19:00:20][DEBUG][main.cpp::39] A debug the debug
-[19:00:20][WARNING][main.cpp::40] A warning the warning
-[19:00:20][FAILURE][main.cpp::41] A failure the failure
-
-======================================================
-  MyLoggerExample log closed at [19:00:20]
-======================================================
+```c++
+#include "MyLogger/MyLogger.hpp"
+#include "MyLogger/Strategies/Writers/ConsoleLogWriter.hpp"
+#include "MyLogger/Strategies/Formatters/OpenTelemetry/OpenTelemetryLineFormatter.hpp"
+#include "MyLogger/Strategies/Formatters/OpenTelemetry/OpenTelemetryFileFormatter.hpp"
+#include "MyLogger/Strategies/Formatters/OpenTelemetry/OpenTelemetryLevel.hpp"
 ```
 
-## Gedit coloration
+## Nested Trace and OpenTelemetry Format
 
-From the `gedit/` folder, move:
-- *.lang files to `/usr/share/gtksourceview-3.0/language-specs`
-- *.xml files to `/usr/share/gtksourceview-3.0/styles`
-
-Then inside Gedit go to `Settings, Police and colors` and select
-the new theme `Lecrapouille Logs`.
+TODO
