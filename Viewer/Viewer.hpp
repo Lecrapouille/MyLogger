@@ -74,8 +74,7 @@ struct ViewerColors
     //! \brief Color for timeline text
     ImU32 timeline_text = IM_COL32(200, 200, 200, 255); // Light Gray
     //! \brief Color for minimap view window
-    ImU32 minimap_window =
-        IM_COL32(0, 0, 0, 128); // Semi-transparent Black
+    ImU32 minimap_window = IM_COL32(0, 0, 0, 128); // Semi-transparent Black
     //! \brief Color for minimap window border
     ImU32 minimap_border = IM_COL32(255, 255, 0, 255); // Yellow
     //! \brief Color for span hover effect
@@ -244,9 +243,10 @@ public:
     // --------------------------------------------------------------------------
     //! \brief Load the traces from a JSON file
     //! \param p_json_data The JSON data
-    //! \throw std::runtime_error if the JSON data is invalid
+    //! \return The error message if the file was not loaded successfully,
+    //! empty string otherwise
     // --------------------------------------------------------------------------
-    void loadFromJSON(const std::string& p_json_data);
+    std::string loadFromJSON(const std::string& p_json_data);
 
     // --------------------------------------------------------------------------
     //! \brief Load the traces from a JSON file path
@@ -475,9 +475,9 @@ private:
     //! \brief Initialize the slider bounds
     // --------------------------------------------------------------------------
     void initializeSliderBounds(double min_duration,
-                               double max_duration,
-                               double min_time,
-                               double max_time);
+                                double max_duration,
+                                double min_time,
+                                double max_time);
 
     // --------------------------------------------------------------------------
     //! \brief Show the file loader panel

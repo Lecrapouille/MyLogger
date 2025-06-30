@@ -1,40 +1,50 @@
 #pragma once
 
-#include "MyLogger/Strategies/LogFileFormatter.hpp"
 #include "MyLogger/Strategies/Formatters/OpenTelemetry/OpenTelemetryLineFormatter.hpp"
+#include "MyLogger/Strategies/LogFileFormatter.hpp"
 
+// Generated file from MyMakefile
 #include "project_info.hpp"
 
 #include <chrono>
-#include <iomanip>
 #include <sstream>
 
 // *****************************************************************************
-//! \brief OpenTelemetry file formatter that adds JSON headers/footers with project info.
+//! \brief File log formatter that adds JSON headers/footers with project info.
 // *****************************************************************************
-class OpenTelemetryFileFormatter : public LogFileFormatter<OpenTelemetryFileFormatter, OpenTelemetryFormatter>
+class OpenTelemetryFileFormatter
+    : public LogFileFormatter<OpenTelemetryFileFormatter,
+                              OpenTelemetryLineFormatter>
 {
 public:
 
     //-------------------------------------------------------------------------
     //! \brief Constructor.
+    //! \param p_formatter The line formatter to use.
+    //! \param p_filename The name of the log file.
+    //! \param p_mode The file mode (Append or Create) - defaults to Append.
     //-------------------------------------------------------------------------
-    OpenTelemetryFileFormatter(OpenTelemetryFormatter& p_line_formatter,
-                              const std::string& p_log_name = "application.log")
-        : LogFileFormatter<OpenTelemetryFileFormatter, OpenTelemetryFormatter>(p_line_formatter)
-        , m_log_name(p_log_name)
+    OpenTelemetryFileFormatter(OpenTelemetryLineFormatter& p_formatter,
+                               const std::string& p_filename,
+                               const FileMode p_mode)
+        : LogFileFormatter<OpenTelemetryFileFormatter,
+                           OpenTelemetryLineFormatter>(p_formatter,
+                                                       p_filename,
+                                                       p_mode)
     {
     }
 
     //-------------------------------------------------------------------------
-    //! \brief Implementation for header formatting with project information in JSON.
+    //! \brief Create JSON header with project information.
     //-------------------------------------------------------------------------
-    std::string headerImpl()
+    std::string headerImpl() const
     {
         std::ostringstream os;
 
+#if 0
         auto now = std::chrono::system_clock::now();
         auto time = std::chrono::system_clock::to_time_t(now);
+#endif
 
         // Get compilation mode string
         std::string mode_str;
@@ -54,13 +64,20 @@ public:
                 break;
         }
 
-        // Create JSON header with project information
-        os << "{ ";
-        os << "\"event\": \"log_session_started\", ";
-        os << "\"timestamp\": \"" << std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S") << "\", ";
-        os << "\"project\": { ";
-        os << "\"name\": \"" << project::info::name << "\", ";
-        os << "\"application\": \"" << project::info::application::name << "\", ";
+        // Start of the OpenTelemetry file
+        os << "{ \"traces\": [ ";
+
+#if 0
+        // Initial trace: project info
+        os << "\"begin_log\": { ";
+        os << "\"creation\": \""
+           << std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S")
+           << "\", ";
+        os << "\"project\": \"" << project::info::name << "\", ";
+        os << "\"application\": { ";
+        os << "\"name\": \"" << project::info::application::name << "\", ";
+        os << "\"summary\": \"" << project::info::application::summary
+           << "\", ";
         os << "\"version\": { ";
         os << "\"major\": " << project::info::version::major << ", ";
         os << "\"minor\": " << project::info::version::minor << ", ";
@@ -70,35 +87,33 @@ public:
         os << "\"git\": { ";
         os << "\"branch\": \"" << project::info::git::branch << "\", ";
         os << "\"sha1\": \"" << project::info::git::sha1 << "\" ";
-        os << "} ";
-        os << "}, ";
-        os << "\"summary\": \"" << project::info::application::summary << "\" ";
-        os << "}\n";
-
+        os << "} } },";
+#endif
         return os.str();
     }
 
     //-------------------------------------------------------------------------
-    //! \brief Implementation for footer formatting with project information in JSON.
+    //! \brief Create JSON footer with session end information.
     //-------------------------------------------------------------------------
-    std::string footerImpl()
+    std::string footerImpl() const
     {
         std::ostringstream os;
 
+#if 0
         auto now = std::chrono::system_clock::now();
         auto time = std::chrono::system_clock::to_time_t(now);
 
-        // Create JSON footer with session end information
-        os << "{ ";
+        // Final trace: project info
+        os << "\"end_log\": { ";
         os << "\"event\": \"log_session_ended\", ";
-        os << "\"timestamp\": \"" << std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S") << "\", ";
-        os << "\"application\": \"" << project::info::application::name << "\", ";
-        os << "\"version\": \"" << project::info::version::full << "\" ";
-        os << "}\n";
+        os << "\"timestamp\": \"";
+        os << std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S");
+        os << "\"}";
+#endif
+
+        // End of the OpenTelemetry file
+        os << "] }\n";
 
         return os.str();
     }
-
-private:
-    std::string m_log_name;
 };

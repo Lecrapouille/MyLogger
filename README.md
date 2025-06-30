@@ -61,17 +61,17 @@ Here's a basic example:
 
 ```c++
 // Create a line formatter
-auto line_formatter = std::make_unique<OpenTelemetryFormatter>("console-service", "1.0.0");
+auto line_formatter = std::make_unique<OpenTelemetryLineFormatter>("console-service", "1.0.0");
 
 // Create a file formatter that wraps the line formatter
 auto file_formatter = std::make_unique<OpenTelemetryFileFormatter>(*line_formatter, "console.log");
 
 // Create a console writer
-auto writer = std::make_unique<ConsoleLogWriter<OpenTelemetryFormatter>>(*line_formatter);
+auto writer = std::make_unique<ConsoleLogWriter<OpenTelemetryLineFormatter>>(*line_formatter);
 
 // Create console logger
-using ConsoleWriterType = ConsoleLogWriter<OpenTelemetryFormatter>;
-using ConsoleLoggerType = Logger<ConsoleWriterType, OpenTelemetryFileFormatter, OpenTelemetryFormatter>;
+using ConsoleWriterType = ConsoleLogWriter<OpenTelemetryLineFormatter>;
+using ConsoleLoggerType = Logger<ConsoleWriterType, OpenTelemetryFileFormatter, OpenTelemetryLineFormatter>;
 
 ConsoleLoggerType logger(std::move(writer), std::move(line_formatter), std::move(file_formatter));
 ```

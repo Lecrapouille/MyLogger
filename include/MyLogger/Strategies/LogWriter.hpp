@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <mutex>
+#include <string>
 
 // Forward declarations
 class Trace;
@@ -9,11 +9,12 @@ enum class LogLevel;
 
 // *****************************************************************************
 //! \brief Thread-safe template-based strategy pattern for writing logs.
-//! This uses CRTP (Curiously Recurring Template Pattern) to avoid virtual calls.
+//! This uses CRTP (Curiously Recurring Template Pattern) to avoid virtual
+//! calls.
 //! \tparam Derived The derived class.
 //! \tparam LineFormatterType The type of the line formatter.
 // *****************************************************************************
-template<typename Derived, typename LineFormatterType>
+template <typename Derived, typename LineFormatterType>
 class LogWriter
 {
 public:
@@ -33,7 +34,7 @@ public:
     //! \param p_level The log level.
     //! \param p_trace The trace containing log data.
     //-------------------------------------------------------------------------
-    void write(LogLevel p_level, const Trace& p_trace)
+    void writeLine(LogLevel p_level, const Trace& p_trace)
     {
         std::string begin = m_line_formatter.formatBegin(p_level);
         std::string middle = m_line_formatter.formatMiddle(p_trace);
@@ -48,12 +49,18 @@ public:
 
     //-------------------------------------------------------------------------
     //! \brief Write a pre-formatted message (fallback method).
+    //! \param p_level The log level.
     //! \param p_message The formatted message to write.
     //-------------------------------------------------------------------------
-    void write(const std::string& p_message)
+    void writeLine(LogLevel p_level, const std::string& p_message)
     {
+        std::string begin = m_line_formatter.formatBegin(p_level);
+        std::string end = m_line_formatter.formatEnd();
+
         std::lock_guard<std::mutex> lock(m_write_mutex);
+        static_cast<Derived*>(this)->writeImpl(begin);
         static_cast<Derived*>(this)->writeImpl(p_message);
+        static_cast<Derived*>(this)->writeImpl(end);
     }
 
     //-------------------------------------------------------------------------
@@ -69,7 +76,7 @@ public:
     //! \brief Write header using file formatter (if provided).
     //! Template parameter allows both file and line formatters.
     //-------------------------------------------------------------------------
-    template<typename FileFormatterType>
+    template <typename FileFormatterType>
     void writeHeader(FileFormatterType& p_file_formatter)
     {
         std::string header = p_file_formatter.header();
@@ -84,7 +91,7 @@ public:
     //! \brief Write footer using file formatter (if provided).
     //! Template parameter allows both file and line formatters.
     //-------------------------------------------------------------------------
-    template<typename FileFormatterType>
+    template <typename FileFormatterType>
     void writeFooter(FileFormatterType& p_file_formatter)
     {
         std::string footer = p_file_formatter.footer();

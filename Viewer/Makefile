@@ -31,6 +31,7 @@ include $(P)/Makefile.common
 TARGET_NAME := mylogger-viewer
 TARGET_DESCRIPTION := Timeline viewer for MyLogger traces
 CXX_STANDARD := --std=c++20
+COMPILATION_MODE := debug
 include $(M)/project/Makefile
 
 ###############################################################################

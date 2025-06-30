@@ -266,8 +266,9 @@ void TimelineViewer::displayMinimap(ImVec2 p_canvas_pos,
         // Add indentation based on depth for hierarchical visualization
         float depth_indent =
             float(span.depth) * 2.0f; // Small indentation per depth level
-        float span_y = minimap_y + m_config.minimap_top_margin +
-                       float(visual_row) * (m_config.minimap_span_height + 2.0f);
+        float span_y =
+            minimap_y + m_config.minimap_top_margin +
+            float(visual_row) * (m_config.minimap_span_height + 2.0f);
 
         // Skip if span would be drawn outside minimap bounds
         if (span_y + m_config.minimap_span_height >
@@ -345,114 +346,142 @@ bool TimelineViewer::passesFilters(const Span& p_span) const
 }
 
 // --------------------------------------------------------------------------
-void TimelineViewer::loadFromJSON(const std::string& p_json_data)
+std::string TimelineViewer::loadFromJSON(const std::string& p_json_data)
 {
     nlohmann::json root;
 
     try
     {
         root = nlohmann::json::parse(p_json_data);
-    }
-    catch (const nlohmann::json::parse_error& e)
-    {
-        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f),
-                           "%s",
-                           std::format("Error: {}", e.what()).c_str());
-        return;
-    }
+        m_traces.clear();
 
-    m_traces.clear();
-
-    for (const auto& trace_data : root["traces"])
-    {
-        Trace trace;
-        trace.trace_id = trace_data["traceId"];
-        trace.trace_name = trace_data["traceName"];
-        trace.total_spans = trace_data["spans"].size();
-
-        // Initialize min/max values
-        double min_time = std::numeric_limits<double>::max();
-        double max_time = 0;
-        trace.min_duration = std::numeric_limits<double>::max();
-        trace.max_duration = 0.0;
-        trace.min_start_time = std::numeric_limits<double>::max();
-        trace.max_start_time = std::numeric_limits<double>::lowest();
-
-        for (const auto& span_data : trace_data["spans"])
+        for (const auto& trace_data : root["traces"])
         {
-            Span span;
-            span.span_id = span_data["spanId"];
-            span.operation_name = span_data["operationName"];
-            span.service_name = span_data["serviceName"];
-            span.color = serviceToColor(span.service_name);
-            span.start_time = span_data["startTime"];
-            span.duration = span_data["duration"];
-            if (span_data.contains("depth"))
+            Trace trace;
+            trace.trace_id = trace_data["traceId"];
+            trace.trace_name = trace_data["traceName"];
+
+            // Check if spans array exists and handle missing spans gracefully
+            if (trace_data.contains("spans") && trace_data["spans"].is_array())
             {
-                span.depth = span_data["depth"];
+                trace.total_spans = trace_data["spans"].size();
             }
             else
             {
-                span.depth = 0;
+                trace.total_spans = 0;
             }
 
-            // Tags
-            if (span_data.contains("tags"))
-            {
-                for (const auto& tag : span_data["tags"])
-                {
-                    span.tags.emplace_back(tag["key"], tag["value"]);
-                }
-            }
-
-            // Calculate trace time bounds
-            min_time = std::min(min_time, span.start_time);
-            max_time = std::max(max_time, span.start_time + span.duration);
-
-            // Cache min/max values for optimization
-            trace.min_duration = std::min(trace.min_duration, span.duration);
-            trace.max_duration = std::max(trace.max_duration, span.duration);
-            trace.min_start_time =
-                std::min(trace.min_start_time, span.start_time);
-            trace.max_start_time =
-                std::max(trace.max_start_time, span.start_time);
-
-            trace.spans.push_back(span);
-        }
-
-        trace.start_time = min_time;
-        trace.total_duration = max_time - min_time;
-
-        // Handle empty traces
-        if (trace.spans.empty())
-        {
-            trace.min_duration = 0.0;
+            // Initialize min/max values
+            double min_time = std::numeric_limits<double>::max();
+            double max_time = 0;
+            trace.min_duration = std::numeric_limits<double>::max();
             trace.max_duration = 0.0;
-            trace.min_start_time = 0.0;
-            trace.max_start_time = 0.0;
+            trace.min_start_time = std::numeric_limits<double>::max();
+            trace.max_start_time = std::numeric_limits<double>::lowest();
+
+            // Only process spans if they exist
+            if (trace_data.contains("spans") && trace_data["spans"].is_array())
+            {
+                for (const auto& span_data : trace_data["spans"])
+                {
+                    Span span;
+                    span.span_id = span_data["spanId"];
+                    span.operation_name = span_data["operationName"];
+                    span.service_name = span_data["serviceName"];
+                    span.color = serviceToColor(span.service_name);
+                    // Convert from nanoseconds (OpenTelemetry standard) to
+                    // milliseconds (for display)
+                    span.start_time =
+                        span_data["startTime"].get<double>() / 1000000.0;
+                    span.duration =
+                        span_data["duration"].get<double>() / 1000000.0;
+                    if (span_data.contains("depth"))
+                    {
+                        span.depth = span_data["depth"];
+                    }
+                    else
+                    {
+                        span.depth = 0;
+                    }
+
+                    // Tags
+                    if (span_data.contains("tags"))
+                    {
+                        for (const auto& tag : span_data["tags"])
+                        {
+                            span.tags.emplace_back(tag["key"], tag["value"]);
+                        }
+                    }
+
+                    // Calculate trace time bounds
+                    min_time = std::min(min_time, span.start_time);
+                    max_time =
+                        std::max(max_time, span.start_time + span.duration);
+
+                    // Cache min/max values for optimization
+                    trace.min_duration =
+                        std::min(trace.min_duration, span.duration);
+                    trace.max_duration =
+                        std::max(trace.max_duration, span.duration);
+                    trace.min_start_time =
+                        std::min(trace.min_start_time, span.start_time);
+                    trace.max_start_time =
+                        std::max(trace.max_start_time, span.start_time);
+
+                    trace.spans.push_back(span);
+                }
+            } // Close the spans existence check
+
+            trace.start_time = min_time;
+            trace.total_duration = max_time - min_time;
+
+            // Handle empty traces
+            if (trace.spans.empty())
+            {
+                trace.min_duration = 0.0;
+                trace.max_duration = 0.0;
+                trace.min_start_time = 0.0;
+                trace.max_start_time = 0.0;
+            }
+
+            // Sort by start time (ascending)
+            std::sort(trace.spans.begin(),
+                      trace.spans.end(),
+                      [](const Span& a, const Span& b)
+                      { return a.start_time < b.start_time; });
+
+            m_traces.push_back(trace);
         }
-
-        // Sort by start time (ascending)
-        std::sort(trace.spans.begin(),
-                  trace.spans.end(),
-                  [](const Span& a, const Span& b)
-                  { return a.start_time < b.start_time; });
-
-        m_traces.push_back(trace);
     }
+    catch (const nlohmann::json::parse_error& e)
+    {
+        std::ostringstream error_msg;
+        error_msg << "Error: " << e.what();
+        return error_msg.str();
+    }
+    catch (const std::exception& e)
+    {
+        std::ostringstream error_msg;
+        error_msg << "Error: " << e.what();
+        return error_msg.str();
+    }
+
+    return {};
 }
 
 // --------------------------------------------------------------------------
 void TimelineViewer::initializeSliderBounds(double min_duration,
-                                           double max_duration,
-                                           double min_time,
-                                           double max_time)
+                                            double max_duration,
+                                            double min_time,
+                                            double max_time)
 {
     // Set duration slider bounds to the actual data range
     m_config.slider_min_bound = float(min_duration);
-    m_config.slider_max_bound = float(max_duration * m_config.duration_buffer_percentage);
+    m_config.slider_max_bound =
+        float(max_duration * m_config.duration_buffer_percentage);
 
-    // Initialize duration filter values to cover the full range (sliders at extremities)
+    // Initialize duration filter values to cover the full range (sliders at
+    // extremities)
     m_config.min_duration_filter = m_config.slider_min_bound;
     m_config.max_duration_filter = m_config.slider_max_bound;
 
@@ -460,7 +489,8 @@ void TimelineViewer::initializeSliderBounds(double min_duration,
     m_config.time_slider_min_bound = float(min_time);
     m_config.time_slider_max_bound = float(max_time);
 
-    // Initialize time filter values to cover the full range (sliders at extremities)
+    // Initialize time filter values to cover the full range (sliders at
+    // extremities)
     m_config.min_time_filter = m_config.time_slider_min_bound;
     m_config.max_time_filter = m_config.time_slider_max_bound;
 }
@@ -468,11 +498,13 @@ void TimelineViewer::initializeSliderBounds(double min_duration,
 // --------------------------------------------------------------------------
 void TimelineViewer::cacheTraceInformation()
 {
-    // Track min and max durations across all traces for filter initialization
+    // Track min and max durations across all traces for filter
+    // initialization
     double global_min_duration = std::numeric_limits<double>::max();
     double global_max_duration = 0.0;
 
-    // Track min and max start times across all traces for time filter initialization
+    // Track min and max start times across all traces for time filter
+    // initialization
     double global_min_time = std::numeric_limits<double>::max();
     double global_max_time = std::numeric_limits<double>::lowest();
 
@@ -485,18 +517,24 @@ void TimelineViewer::cacheTraceInformation()
         if (!trace.spans.empty())
         {
             // Use cached min/max values from trace
-            global_min_duration = std::min(global_min_duration, trace.min_duration);
-            global_max_duration = std::max(global_max_duration, trace.max_duration);
+            global_min_duration =
+                std::min(global_min_duration, trace.min_duration);
+            global_max_duration =
+                std::max(global_max_duration, trace.max_duration);
             global_min_time = std::min(global_min_time, trace.min_start_time);
             global_max_time = std::max(global_max_time, trace.max_start_time);
             has_spans = true;
         }
     }
 
-    // Initialize duration and time filters based on the data from loaded traces
+    // Initialize duration and time filters based on the data from loaded
+    // traces
     if (has_spans)
     {
-        initializeSliderBounds(global_min_duration, global_max_duration, global_min_time, global_max_time);
+        initializeSliderBounds(global_min_duration,
+                               global_max_duration,
+                               global_min_time,
+                               global_max_time);
     }
     else
     {
@@ -533,16 +571,13 @@ std::string TimelineViewer::loadFromFile(const std::string& p_file_path)
         return "Error: File " + p_file_path + " is empty";
     }
 
-    try
+    std::string error_message = loadFromJSON(json_content);
+    if (!error_message.empty())
     {
-        loadFromJSON(json_content);
-        cacheTraceInformation();
-        return {};
+        return error_message;
     }
-    catch (const std::exception& e)
-    {
-        return "Error: " + std::string(e.what());
-    }
+    cacheTraceInformation();
+    return {};
 }
 
 // --------------------------------------------------------------------------
@@ -599,14 +634,15 @@ void TimelineViewer::setupWorkspace()
         ImGuiID dock_id_timeline = ImGui::GetID("MyDockSpace");
         ImGui::DockSpace(dock_id_timeline, ImVec2(0.0f, 0.0f), dockspace_flags);
 
-        // Setup default docking layout only if imgui.ini is missing or invalid
+        // Setup default docking layout only if imgui.ini is missing or
+        // invalid
         static bool first_time = true;
         if (first_time)
         {
             first_time = false;
 
-            // Check if the dockspace has no configuration (imgui.ini missing or
-            // invalid)
+            // Check if the dockspace has no configuration (imgui.ini
+            // missing or invalid)
             if (ImGui::DockBuilderGetNode(dock_id_timeline) == nullptr)
             {
                 std::cout << "Setting up default docking layout (imgui.ini not "
@@ -621,15 +657,27 @@ void TimelineViewer::setupWorkspace()
                     dock_id_timeline, ImGui::GetMainViewport()->WorkSize);
 
                 // Split the dockspace into left panel and main area
-                auto dock_id_control = ImGui::DockBuilderSplitNode(
-                    dock_id_timeline, ImGuiDir_Left, 0.25f, nullptr, &dock_id_timeline);
-                auto dock_id_file_loader = ImGui::DockBuilderSplitNode(
-                    dock_id_timeline, ImGuiDir_Up, 0.15f, nullptr, &dock_id_timeline);
-                auto dock_id_span_details = ImGui::DockBuilderSplitNode(
-                    dock_id_timeline, ImGuiDir_Down, 0.3f, nullptr, &dock_id_timeline);
+                auto dock_id_control =
+                    ImGui::DockBuilderSplitNode(dock_id_timeline,
+                                                ImGuiDir_Left,
+                                                0.25f,
+                                                nullptr,
+                                                &dock_id_timeline);
+                auto dock_id_file_loader =
+                    ImGui::DockBuilderSplitNode(dock_id_timeline,
+                                                ImGuiDir_Up,
+                                                0.15f,
+                                                nullptr,
+                                                &dock_id_timeline);
+                auto dock_id_span_details =
+                    ImGui::DockBuilderSplitNode(dock_id_timeline,
+                                                ImGuiDir_Down,
+                                                0.3f,
+                                                nullptr,
+                                                &dock_id_timeline);
 
-                // Split bottom area to have minimap and span details side by
-                // side
+                // Split bottom area to have minimap and span details side
+                // by side
                 auto dock_id_minimap =
                     ImGui::DockBuilderSplitNode(dock_id_span_details,
                                                 ImGuiDir_Left,
@@ -638,12 +686,15 @@ void TimelineViewer::setupWorkspace()
                                                 &dock_id_span_details);
 
                 // Dock windows to specific areas
-                ImGui::DockBuilderDockWindow("File Loader", dock_id_file_loader);
+                ImGui::DockBuilderDockWindow("File Loader",
+                                             dock_id_file_loader);
                 ImGui::DockBuilderDockWindow("Trace Search & Filter",
                                              dock_id_control);
-                ImGui::DockBuilderDockWindow("Trace Timeline", dock_id_timeline);
+                ImGui::DockBuilderDockWindow("Trace Timeline",
+                                             dock_id_timeline);
                 ImGui::DockBuilderDockWindow("Trace Minimap", dock_id_minimap);
-                ImGui::DockBuilderDockWindow("Span Details", dock_id_span_details);
+                ImGui::DockBuilderDockWindow("Span Details",
+                                             dock_id_span_details);
 
                 ImGui::DockBuilderFinish(dock_id_timeline);
             }
@@ -696,9 +747,11 @@ void TimelineViewer::showFileLoader()
             }
             else
             {
+                std::ostringstream error_msg;
+                error_msg << "Error: " << error_message;
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f),
-                                  "%s",
-                                  std::format("Error: {}", error_message).c_str());
+                                   "%s",
+                                   error_msg.str().c_str());
             }
         }
     }
@@ -736,15 +789,18 @@ void TimelineViewer::showFileLoader()
             }
             catch (const std::exception& e)
             {
+                std::ostringstream error_msg;
+                error_msg << "Error: " << e.what();
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f),
-                                  "%s",
-                                  std::format("Error: {}", e.what()).c_str());
+                                   "%s",
+                                   error_msg.str().c_str());
             }
             directory_loaded = true;
         }
 
-        ImGui::Text("%s",
-                    std::format("Directory: {}", current_directory).c_str());
+        std::ostringstream directory_msg;
+        directory_msg << "Directory: " << current_directory;
+        ImGui::Text("%s", directory_msg.str().c_str());
         ImGui::Separator();
 
         // File list
@@ -755,7 +811,8 @@ void TimelineViewer::showFileLoader()
                 if (ImGui::Selectable(file.c_str()))
                 {
                     std::string full_path = current_directory + "/" + file;
-                    strncpy(file_path_buffer, full_path.c_str(), buffer_size - 1);
+                    strncpy(
+                        file_path_buffer, full_path.c_str(), buffer_size - 1);
                     file_path_buffer[buffer_size - 1] = '\0';
                     show_file_dialog = false;
                 }
@@ -830,11 +887,12 @@ void TimelineViewer::showControlPanel()
 
                 if (!m_traces[i].spans.empty())
                 {
-                    // Update slider bounds to match the selected trace's duration range using cached values
+                    // Update slider bounds to match the selected trace's
+                    // duration range using cached values
                     initializeSliderBounds(m_traces[i].min_duration,
-                                         m_traces[i].max_duration,
-                                         m_traces[i].min_start_time,
-                                         m_traces[i].max_start_time);
+                                           m_traces[i].max_duration,
+                                           m_traces[i].min_start_time,
+                                           m_traces[i].max_start_time);
                 }
             }
             if (is_selected)
@@ -910,12 +968,12 @@ void TimelineViewer::showControlPanel()
         std::string total_duration =
             std::format("Total Duration: {:.2f} ms", trace.total_duration);
         ImGui::Text("%s", total_duration.c_str());
-        ImGui::Text("%s",
-                    std::format("Total Spans: {}", trace.total_spans).c_str());
-        ImGui::Text(
-            "%s",
-            std::format("Services: {}", (int)trace.service_colors.size())
-                .c_str());
+        std::string total_spans =
+            std::format("Total Spans: {}", trace.total_spans);
+        ImGui::Text("%s", total_spans.c_str());
+        std::string services =
+            std::format("Services: {}", (int)trace.service_colors.size());
+        ImGui::Text("%s", services.c_str());
     }
 
     ImGui::PopStyleColor(3);
@@ -980,8 +1038,9 @@ void TimelineViewer::showMinimapPanel()
         // Add indentation based on depth for hierarchical visualization
         float depth_indent =
             float(span.depth) * 2.0f; // Small indentation per depth level
-        float span_y = minimap_canvas_pos.y + m_config.minimap_top_margin +
-                       float(visual_row) * (m_config.minimap_span_height + 2.0f);
+        float span_y =
+            minimap_canvas_pos.y + m_config.minimap_top_margin +
+            float(visual_row) * (m_config.minimap_span_height + 2.0f);
 
         // Skip if span would be drawn outside minimap bounds
         if (span_y + m_config.minimap_span_height >
@@ -1068,13 +1127,15 @@ void TimelineViewer::showTimelinePanel()
 
     const Trace& trace = m_traces[m_selected_trace];
 
-    ImGui::Text("%s", std::format("Trace: {}", trace.trace_name).c_str());
+    std::string trace_text = std::format("Trace: {}", trace.trace_name);
+    ImGui::Text("%s", trace_text.c_str());
     ImGui::SameLine();
     std::string duration_text =
         std::format("| Duration: {:.2f} ms", trace.total_duration);
     ImGui::Text("%s", duration_text.c_str());
     ImGui::SameLine();
-    ImGui::Text("%s", std::format("| {} spans", trace.total_spans).c_str());
+    std::string spans_text = std::format("| {} spans", trace.total_spans);
+    ImGui::Text("%s", spans_text.c_str());
 
     ImGui::Separator();
 
