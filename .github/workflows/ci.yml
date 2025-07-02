@@ -22,7 +22,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install pkg-config lcov libdw-dev bc
+          sudo apt-get install pkg-config lcov libdw-dev bc libsfml-dev
       - name: Download, configure and install Google test
         run: |
           wget https://github.com/google/googletest/archive/release-1.11.0.tar.gz
@@ -32,6 +32,7 @@ jobs:
           sudo make install
       - name: Compile MyLogger
         run: |
+          make download-external-libs
           make -j`nproc --all`
           sudo make install
       - name: Do non regression tests
@@ -50,7 +51,7 @@ jobs:
           submodules: true
       - name: Install packages
         run: |
-          brew install pkg-config
+          brew install pkg-config sfml
       - name: Download, configure and install Google test
         run: |
           wget https://github.com/google/googletest/archive/release-1.11.0.tar.gz
@@ -60,6 +61,7 @@ jobs:
           sudo make install
       - name: Compile MyLogger
         run: |
+          make download-external-libs
           make -j`sysctl -n hw.logicalcpu`
       - name: Do non regression tests
         run: |
