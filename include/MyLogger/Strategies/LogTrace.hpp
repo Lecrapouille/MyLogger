@@ -37,6 +37,9 @@ class Trace
 {
 public:
 
+    using Attributes = std::map<std::string, std::string>;
+    using Tags = std::map<std::string, std::pair<std::string, std::string>>;
+
     //-------------------------------------------------------------------------
     //! \brief Constructor for root trace.
     //! \param p_operation_name The name of the operation.
@@ -47,14 +50,9 @@ public:
                        p_attributes = {})
         : m_operation_name(p_operation_name)
     {
+        m_start_time_nanos = getCurrentTimeNanos();
         m_trace_id = generateTraceId();
         m_span_id = generateSpanId();
-
-        m_start_time_nanos = static_cast<uint64_t>(
-            std::chrono::duration_cast<std::chrono::nanoseconds>(
-                std::chrono::system_clock::now().time_since_epoch())
-                .count());
-
         for (const auto& [key, value] : p_attributes)
         {
             m_attributes[key] = value;
@@ -72,15 +70,11 @@ public:
           std::initializer_list<std::pair<const char*, const char*>>
               p_attributes = {})
         : m_operation_name(p_operation_name),
-          m_trace_id(p_parent.m_trace_id), // Inherit trace ID from parent
+          m_trace_id(generateTraceId()),
           m_span_id(generateSpanId()),
-          m_parent_span_id(p_parent.m_span_id)
+          m_parent_trace_id(p_parent.m_trace_id)
     {
-        m_start_time_nanos = static_cast<uint64_t>(
-            std::chrono::duration_cast<std::chrono::nanoseconds>(
-                std::chrono::system_clock::now().time_since_epoch())
-                .count());
-
+        m_start_time_nanos = getCurrentTimeNanos();
         for (const auto& [key, value] : p_attributes)
         {
             m_attributes[key] = value;
@@ -88,6 +82,14 @@ public:
 
         // Add this span to parent's children
         p_parent.m_children.push_back(std::make_shared<Trace>(*this));
+    }
+
+    //-------------------------------------------------------------------------
+    //! \brief Destructor.
+    //-------------------------------------------------------------------------
+    ~Trace()
+    {
+        end();
     }
 
     //-------------------------------------------------------------------------
@@ -99,18 +101,14 @@ public:
                   std::initializer_list<std::pair<const char*, const char*>>
                       p_attributes = {})
     {
-        auto event_time = static_cast<uint64_t>(
-            std::chrono::duration_cast<std::chrono::nanoseconds>(
-                std::chrono::system_clock::now().time_since_epoch())
-                .count());
-
-        std::map<std::string, std::string> event_attributes;
+        auto event_time = getCurrentTimeNanos();
+        Attributes attributes;
         for (const auto& [key, value] : p_attributes)
         {
-            event_attributes[key] = value;
+            attributes[key] = value;
         }
 
-        m_events.emplace_back(p_name, event_time, std::move(event_attributes));
+        m_events.emplace_back(p_name, event_time, std::move(attributes));
     }
 
     //-------------------------------------------------------------------------
@@ -125,16 +123,26 @@ public:
     }
 
     //-------------------------------------------------------------------------
+    //! \brief Add a tag to this trace.
+    //! \param p_key The tag key.
+    //! \param p_value The tag value.
+    //! \param p_value_type The tag value type (optional).
+    //-------------------------------------------------------------------------
+    inline void addTag(const std::string& p_key,
+                       const std::string& p_value,
+                       const std::string& p_value_type = {})
+    {
+        m_tags[p_key] = std::make_pair(p_value, p_value_type);
+    }
+
+    //-------------------------------------------------------------------------
     //! \brief End this trace/span.
     //-------------------------------------------------------------------------
     void end()
     {
         if (!m_ended)
         {
-            m_end_time_nanos = static_cast<uint64_t>(
-                std::chrono::duration_cast<std::chrono::nanoseconds>(
-                    std::chrono::system_clock::now().time_since_epoch())
-                    .count());
+            m_end_time_nanos = getCurrentTimeNanos();
             m_ended = true;
         }
     }
@@ -150,10 +158,7 @@ public:
         }
         else
         {
-            auto current_time = static_cast<uint64_t>(
-                std::chrono::duration_cast<std::chrono::nanoseconds>(
-                    std::chrono::system_clock::now().time_since_epoch())
-                    .count());
+            auto current_time = getCurrentTimeNanos();
             return current_time - m_start_time_nanos;
         }
     }
@@ -204,7 +209,7 @@ public:
     //-------------------------------------------------------------------------
     const std::string& getParentSpanId() const
     {
-        return m_parent_span_id;
+        return m_parent_trace_id;
     }
 
     //-------------------------------------------------------------------------
@@ -232,9 +237,17 @@ public:
     }
 
     //-------------------------------------------------------------------------
+    //! \brief Get all tags.
+    //-------------------------------------------------------------------------
+    const Tags& getTags() const
+    {
+        return m_tags;
+    }
+
+    //-------------------------------------------------------------------------
     //! \brief Get all attributes.
     //-------------------------------------------------------------------------
-    const std::map<std::string, std::string>& getAttributes() const
+    const Attributes& getAttributes() const
     {
         return m_attributes;
     }
@@ -256,6 +269,17 @@ public:
     }
 
 private:
+
+    //-------------------------------------------------------------------------
+    //! \brief Get current time in nanoseconds since epoch.
+    //-------------------------------------------------------------------------
+    static uint64_t getCurrentTimeNanos()
+    {
+        return static_cast<uint64_t>(
+            std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::system_clock::now().time_since_epoch())
+                .count());
+    }
 
     //-------------------------------------------------------------------------
     //! \brief Generate a random trace ID (16 bytes = 32 hex chars).
@@ -302,9 +326,11 @@ private:
     //! \brief The span ID (8 bytes = 16 hex chars)
     std::string m_span_id;
     //! \brief The parent span ID (empty for root spans)
-    std::string m_parent_span_id;
+    std::string m_parent_trace_id;
     //! \brief Attributes key-value pairs
-    std::map<std::string, std::string> m_attributes;
+    Attributes m_attributes;
+    //! \brief Tags key-value pairs
+    Tags m_tags;
     //! \brief Child spans
     std::vector<std::shared_ptr<Trace>> m_children;
     //! \brief Events

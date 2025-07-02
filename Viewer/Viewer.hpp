@@ -20,6 +20,32 @@
 #include <vector>
 
 // ****************************************************************************
+//! \brief Time unit enumeration for display
+// ****************************************************************************
+enum class TimeUnit
+{
+    Nanoseconds,
+    Microseconds,
+    Milliseconds,
+    Seconds,
+    Minutes,
+    Hours
+};
+
+// ****************************************************************************
+//! \brief Time unit conversion utilities
+// ****************************************************************************
+struct TimeUnitInfo
+{
+    TimeUnit unit;
+    std::string symbol;
+    std::string name;
+    double factor_from_nanoseconds;
+    double min_threshold; // Minimum value to use this unit
+    double max_threshold; // Maximum value to switch to larger unit
+};
+
+// ****************************************************************************
 //! \brief Span structure based on OpenTelemetry Span
 // ****************************************************************************
 struct Span
@@ -265,6 +291,32 @@ public:
     //! \brief Cache trace information and initialize filters
     // --------------------------------------------------------------------------
     void cacheTraceInformation();
+
+    // --------------------------------------------------------------------------
+    //! \brief Get available time units
+    // --------------------------------------------------------------------------
+    static std::vector<TimeUnitInfo> getAvailableTimeUnits();
+
+    // --------------------------------------------------------------------------
+    //! \brief Convert time value from nanoseconds to specified unit
+    // --------------------------------------------------------------------------
+    static double convertTime(double nanoseconds, TimeUnit target_unit);
+
+    // --------------------------------------------------------------------------
+    //! \brief Automatically detect best time unit for given range
+    // --------------------------------------------------------------------------
+    static TimeUnit detectBestTimeUnit(double min_value_ns,
+                                       double max_value_ns);
+
+    // --------------------------------------------------------------------------
+    //! \brief Get time unit info for a specific unit
+    // --------------------------------------------------------------------------
+    static TimeUnitInfo getTimeUnitInfo(TimeUnit unit);
+
+    // --------------------------------------------------------------------------
+    //! \brief Format time value with unit symbol
+    // --------------------------------------------------------------------------
+    static std::string formatTimeWithUnit(double nanoseconds, TimeUnit unit);
 
 private:
 
@@ -514,4 +566,10 @@ private:
         ImVec2 start;
         ImVec2 end;
     } m_zoom_selection;
+
+    //! \brief Current time unit for display
+    TimeUnit m_current_time_unit = TimeUnit::Nanoseconds;
+
+    //! \brief Auto-detect time unit based on data
+    bool m_auto_detect_time_unit = true;
 };

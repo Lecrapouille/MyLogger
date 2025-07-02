@@ -1,15 +1,15 @@
 {
     "traces": [
         {
-            "traceId": "trace-001-complex",
+            "traceID": "trace-001-complex",
             "traceName": "E-commerce Order Processing",
             "spans": [
                 {
                     "spanId": "span-001",
                     "operationName": "POST /api/orders",
                     "serviceName": "api-gateway",
-                    "startTime": 0.0,
-                    "duration": 1250.5,
+                    "startTime": 0,
+                    "duration": 1250500000,
                     "depth": 0,
                     "tags": [
                         {
@@ -30,8 +30,8 @@
                     "spanId": "span-002",
                     "operationName": "validateOrder",
                     "serviceName": "order-service",
-                    "startTime": 12.3,
-                    "duration": 85.7,
+                    "startTime": 12300000,
+                    "duration": 85700000,
                     "depth": 1,
                     "tags": [
                         {
@@ -48,8 +48,8 @@
                     "spanId": "span-003",
                     "operationName": "checkInventory",
                     "serviceName": "inventory-service",
-                    "startTime": 105.1,
-                    "duration": 234.8,
+                    "startTime": 105100000,
+                    "duration": 234800000,
                     "depth": 1,
                     "tags": [
                         {
@@ -62,8 +62,8 @@
                     "spanId": "span-004",
                     "operationName": "queryProductStock",
                     "serviceName": "inventory-service",
-                    "startTime": 115.5,
-                    "duration": 45.2,
+                    "startTime": 115500000,
+                    "duration": 45200000,
                     "depth": 2,
                     "tags": [
                         {
@@ -80,8 +80,8 @@
                     "spanId": "span-005",
                     "operationName": "SELECT stock",
                     "serviceName": "inventory-db",
-                    "startTime": 125.8,
-                    "duration": 28.4,
+                    "startTime": 125800000,
+                    "duration": 28400000,
                     "depth": 3,
                     "tags": [
                         {
@@ -98,8 +98,8 @@
                     "spanId": "span-006",
                     "operationName": "queryProductStock",
                     "serviceName": "inventory-service",
-                    "startTime": 170.3,
-                    "duration": 52.1,
+                    "startTime": 170300000,
+                    "duration": 52100000,
                     "depth": 2,
                     "tags": [
                         {
@@ -116,8 +116,8 @@
                     "spanId": "span-007",
                     "operationName": "SELECT stock",
                     "serviceName": "inventory-db",
-                    "startTime": 178.7,
-                    "duration": 35.9,
+                    "startTime": 178700000,
+                    "duration": 35900000,
                     "depth": 3,
                     "tags": [
                         {
@@ -130,8 +130,8 @@
                     "spanId": "span-008",
                     "operationName": "reserveStock",
                     "serviceName": "inventory-service",
-                    "startTime": 230.2,
-                    "duration": 95.6,
+                    "startTime": 230200000,
+                    "duration": 95600000,
                     "depth": 2,
                     "tags": [
                         {
@@ -144,8 +144,8 @@
                     "spanId": "span-009",
                     "operationName": "BEGIN TRANSACTION",
                     "serviceName": "inventory-db",
-                    "startTime": 238.1,
-                    "duration": 2.1,
+                    "startTime": 238100000,
+                    "duration": 2100000,
                     "depth": 3,
                     "tags": [
                         {
@@ -158,8 +158,8 @@
                     "spanId": "span-010",
                     "operationName": "UPDATE stock",
                     "serviceName": "inventory-db",
-                    "startTime": 245.5,
-                    "duration": 67.3,
+                    "startTime": 245500000,
+                    "duration": 67300000,
                     "depth": 3,
                     "tags": [
                         {
@@ -172,8 +172,8 @@
                     "spanId": "span-011",
                     "operationName": "COMMIT",
                     "serviceName": "inventory-db",
-                    "startTime": 318.2,
-                    "duration": 5.4,
+                    "startTime": 318200000,
+                    "duration": 5400000,
                     "depth": 3,
                     "tags": [
                         {
@@ -186,8 +186,8 @@
                     "spanId": "span-012",
                     "operationName": "calculatePrice",
                     "serviceName": "pricing-service",
-                    "startTime": 350.8,
-                    "duration": 156.3,
+                    "startTime": 350800000,
+                    "duration": 156300000,
                     "depth": 1,
                     "tags": [
                         {
@@ -200,8 +200,8 @@
                     "spanId": "span-013",
                     "operationName": "getCustomerTier",
                     "serviceName": "customer-service",
-                    "startTime": 365.2,
-                    "duration": 78.9,
+                    "startTime": 365200000,
+                    "duration": 78900000,
                     "depth": 2,
                     "tags": [
                         {
@@ -214,8 +214,8 @@
                     "spanId": "span-014",
                     "operationName": "SELECT customer",
                     "serviceName": "customer-db",
-                    "startTime": 375.1,
-                    "duration": 45.6,
+                    "startTime": 375100000,
+                    "duration": 45600000,
                     "depth": 3,
                     "tags": [
                         {
@@ -228,8 +228,8 @@
                     "spanId": "span-015",
                     "operationName": "calculateLoyaltyDiscount",
                     "serviceName": "customer-service",
-                    "startTime": 425.8,
-                    "duration": 15.2,
+                    "startTime": 425800000,
+                    "duration": 15200000,
                     "depth": 3,
                     "tags": [
                         {
@@ -246,8 +246,8 @@
                     "spanId": "span-016",
                     "operationName": "applyDiscounts",
                     "serviceName": "pricing-service",
-                    "startTime": 450.3,
-                    "duration": 42.1,
+                    "startTime": 450300000,
+                    "duration": 42100000,
                     "depth": 2,
                     "tags": [
                         {
@@ -260,8 +260,8 @@
                     "spanId": "span-017",
                     "operationName": "processPayment",
                     "serviceName": "payment-service",
-                    "startTime": 520.7,
-                    "duration": 445.2,
+                    "startTime": 520700000,
+                    "duration": 445200000,
                     "depth": 1,
                     "tags": [
                         {
@@ -278,8 +278,8 @@
                     "spanId": "span-018",
                     "operationName": "validateCard",
                     "serviceName": "payment-gateway",
-                    "startTime": 535.1,
-                    "duration": 234.8,
+                    "startTime": 535100000,
+                    "duration": 234800000,
                     "depth": 2,
                     "tags": [
                         {
@@ -296,8 +296,8 @@
                     "spanId": "span-019",
                     "operationName": "HTTP POST /validate",
                     "serviceName": "bank-api",
-                    "startTime": 545.6,
-                    "duration": 198.3,
+                    "startTime": 545600000,
+                    "duration": 198300000,
                     "depth": 3,
                     "tags": [
                         {
@@ -314,8 +314,8 @@
                     "spanId": "span-020",
                     "operationName": "fraud_detection",
                     "serviceName": "bank-api",
-                    "startTime": 555.2,
-                    "duration": 145.7,
+                    "startTime": 555200000,
+                    "duration": 145700000,
                     "depth": 4,
                     "tags": [
                         {
@@ -332,8 +332,8 @@
                     "spanId": "span-021",
                     "operationName": "ml_model_inference",
                     "serviceName": "fraud-ml-service",
-                    "startTime": 565.8,
-                    "duration": 89.4,
+                    "startTime": 565800000,
+                    "duration": 89400000,
                     "depth": 5,
                     "tags": [
                         {
@@ -350,8 +350,8 @@
                     "spanId": "span-022",
                     "operationName": "feature_extraction",
                     "serviceName": "fraud-ml-service",
-                    "startTime": 570.1,
-                    "duration": 25.3,
+                    "startTime": 570100000,
+                    "duration": 25300000,
                     "depth": 6,
                     "tags": [
                         {
@@ -364,8 +364,8 @@
                     "spanId": "span-023",
                     "operationName": "model_prediction",
                     "serviceName": "fraud-ml-service",
-                    "startTime": 600.8,
-                    "duration": 54.4,
+                    "startTime": 600800000,
+                    "duration": 54400000,
                     "depth": 6,
                     "tags": [
                         {
@@ -378,8 +378,8 @@
                     "spanId": "span-024",
                     "operationName": "chargeCard",
                     "serviceName": "payment-gateway",
-                    "startTime": 780.5,
-                    "duration": 156.8,
+                    "startTime": 780500000,
+                    "duration": 156800000,
                     "depth": 2,
                     "tags": [
                         {
@@ -392,8 +392,8 @@
                     "spanId": "span-025",
                     "operationName": "createOrder",
                     "serviceName": "order-service",
-                    "startTime": 975.2,
-                    "duration": 189.4,
+                    "startTime": 975200000,
+                    "duration": 189400000,
                     "depth": 1,
                     "tags": [
                         {
@@ -406,8 +406,8 @@
                     "spanId": "span-026",
                     "operationName": "INSERT order",
                     "serviceName": "order-db",
-                    "startTime": 985.7,
-                    "duration": 67.2,
+                    "startTime": 985700000,
+                    "duration": 67200000,
                     "depth": 2,
                     "tags": [
                         {
@@ -420,8 +420,8 @@
                     "spanId": "span-027",
                     "operationName": "sendConfirmationEmail",
                     "serviceName": "notification-service",
-                    "startTime": 1060.1,
-                    "duration": 95.8,
+                    "startTime": 1060100000,
+                    "duration": 95800000,
                     "depth": 2,
                     "tags": [
                         {
@@ -438,8 +438,8 @@
                     "spanId": "span-028",
                     "operationName": "SMTP send",
                     "serviceName": "email-gateway",
-                    "startTime": 1070.5,
-                    "duration": 78.3,
+                    "startTime": 1070500000,
+                    "duration": 78300000,
                     "depth": 3,
                     "tags": [
                         {
@@ -451,15 +451,15 @@
             ]
         },
         {
-            "traceId": "trace-002-search",
+            "traceID": "trace-002-search",
             "traceName": "Product Search Query",
             "spans": [
                 {
                     "spanId": "search-001",
                     "operationName": "GET /api/search",
                     "serviceName": "search-api",
-                    "startTime": 0.0,
-                    "duration": 156.7,
+                    "startTime": 0,
+                    "duration": 156700000,
                     "depth": 0,
                     "tags": [
                         {
@@ -476,8 +476,8 @@
                     "spanId": "search-002",
                     "operationName": "elasticSearch",
                     "serviceName": "elasticsearch",
-                    "startTime": 15.3,
-                    "duration": 89.2,
+                    "startTime": 15300000,
+                    "duration": 89200000,
                     "depth": 1,
                     "tags": [
                         {
@@ -494,8 +494,8 @@
                     "spanId": "search-003",
                     "operationName": "enrichResults",
                     "serviceName": "product-service",
-                    "startTime": 110.8,
-                    "duration": 35.4,
+                    "startTime": 110800000,
+                    "duration": 35400000,
                     "depth": 1,
                     "tags": [
                         {

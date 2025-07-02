@@ -7,6 +7,8 @@
 #include <format>
 #include <fstream>
 #include <iomanip>
+#include <limits>
+#include <sstream>
 
 // --------------------------------------------------------------------------
 std::ostream& operator<<(std::ostream& os, const Span& span)
@@ -15,8 +17,8 @@ std::ostream& operator<<(std::ostream& os, const Span& span)
        << "  ID: " << span.span_id << "\n"
        << "  Operation: " << span.operation_name << "\n"
        << "  Service: " << span.service_name << "\n"
-       << "  Start Time: " << span.start_time << "ms\n"
-       << "  Duration: " << span.duration << "ms\n"
+       << "  Start Time: " << span.start_time << "ns\n"
+       << "  Duration: " << span.duration << "ns\n"
        << "  Depth: " << span.depth << "\n";
 
     if (!span.tags.empty())
@@ -358,7 +360,7 @@ std::string TimelineViewer::loadFromJSON(const std::string& p_json_data)
         for (const auto& trace_data : root["traces"])
         {
             Trace trace;
-            trace.trace_id = trace_data["traceId"];
+            trace.trace_id = trace_data["traceID"];
             trace.trace_name = trace_data["traceName"];
 
             // Check if spans array exists and handle missing spans gracefully
@@ -385,16 +387,15 @@ std::string TimelineViewer::loadFromJSON(const std::string& p_json_data)
                 for (const auto& span_data : trace_data["spans"])
                 {
                     Span span;
-                    span.span_id = span_data["spanId"];
+                    span.span_id = span_data["spanID"];
                     span.operation_name = span_data["operationName"];
                     span.service_name = span_data["serviceName"];
                     span.color = serviceToColor(span.service_name);
-                    // Convert from nanoseconds (OpenTelemetry standard) to
-                    // milliseconds (for display)
-                    span.start_time =
-                        span_data["startTime"].get<double>() / 1000000.0;
-                    span.duration =
-                        span_data["duration"].get<double>() / 1000000.0;
+                    // Keep timestamps in nanoseconds (original OpenTelemetry
+                    // format) Time unit conversion will be handled by display
+                    // functions
+                    span.start_time = span_data["startTime"].get<double>();
+                    span.duration = span_data["duration"].get<double>();
                     if (span_data.contains("depth"))
                     {
                         span.depth = span_data["depth"];
@@ -404,12 +405,42 @@ std::string TimelineViewer::loadFromJSON(const std::string& p_json_data)
                         span.depth = 0;
                     }
 
-                    // Tags
+                    // Tags (test.json format)
                     if (span_data.contains("tags"))
                     {
                         for (const auto& tag : span_data["tags"])
                         {
                             span.tags.emplace_back(tag["key"], tag["value"]);
+                        }
+                    }
+
+                    // Attributes (nested-traces.json format)
+                    if (span_data.contains("attributes"))
+                    {
+                        for (const auto& [key, value] :
+                             span_data["attributes"].items())
+                        {
+                            span.tags.emplace_back(key,
+                                                   value.get<std::string>());
+                        }
+                    }
+
+                    // Events (nested-traces.json format)
+                    if (span_data.contains("events"))
+                    {
+                        for (const auto& event : span_data["events"])
+                        {
+                            std::string event_info =
+                                "Event: " + event["name"].get<std::string>();
+                            if (event.contains("timestamp"))
+                            {
+                                event_info +=
+                                    " (timestamp: " +
+                                    std::to_string(
+                                        event["timestamp"].get<long>()) +
+                                    ")";
+                            }
+                            span.logs.push_back(event_info);
                         }
                     }
 
@@ -434,6 +465,31 @@ std::string TimelineViewer::loadFromJSON(const std::string& p_json_data)
 
             trace.start_time = min_time;
             trace.total_duration = max_time - min_time;
+
+            // Normalize timestamps: subtract min_time from all span start_times
+            // to make them relative to the trace start
+            for (auto& span : trace.spans)
+            {
+                span.start_time -= min_time;
+            }
+
+            // Update cached min/max values after normalization
+            if (!trace.spans.empty())
+            {
+                trace.min_start_time =
+                    0.0; // After normalization, minimum is always 0
+                trace.max_start_time =
+                    trace.total_duration - trace.spans.back().duration;
+
+                // Recalculate these with normalized values
+                for (const auto& span : trace.spans)
+                {
+                    trace.min_start_time =
+                        std::min(trace.min_start_time, span.start_time);
+                    trace.max_start_time =
+                        std::max(trace.max_start_time, span.start_time);
+                }
+            }
 
             // Handle empty traces
             if (trace.spans.empty())
@@ -546,6 +602,13 @@ void TimelineViewer::cacheTraceInformation()
     {
         m_view_start = 0;
         m_view_end = m_traces[m_selected_trace].total_duration;
+
+        // Auto-detect best time unit if enabled
+        if (m_auto_detect_time_unit && has_spans)
+        {
+            m_current_time_unit =
+                detectBestTimeUnit(global_min_time, global_max_time);
+        }
     }
 }
 
@@ -904,6 +967,75 @@ void TimelineViewer::showControlPanel()
     }
 
     ImGui::Separator();
+
+    // Time Unit Selection
+    ImGui::Text("Time Units");
+
+    // Store previous state to detect changes
+    static bool prev_auto_detect = m_auto_detect_time_unit;
+    static TimeUnit prev_time_unit = m_current_time_unit;
+
+    ImGui::Checkbox("Auto-detect", &m_auto_detect_time_unit);
+
+    // If auto-detect was just enabled, recalculate best unit
+    if (m_auto_detect_time_unit && !prev_auto_detect && !m_traces.empty())
+    {
+        // Find global time range across all traces
+        double global_min_time = std::numeric_limits<double>::max();
+        double global_max_time = std::numeric_limits<double>::lowest();
+
+        for (const auto& trace : m_traces)
+        {
+            if (!trace.spans.empty())
+            {
+                global_min_time =
+                    std::min(global_min_time, trace.min_start_time);
+                global_max_time = std::max(global_max_time,
+                                           trace.max_start_time +
+                                               trace.spans.back().duration);
+            }
+        }
+
+        if (global_min_time < global_max_time)
+        {
+            m_current_time_unit =
+                detectBestTimeUnit(global_min_time, global_max_time);
+        }
+    }
+
+    if (!m_auto_detect_time_unit)
+    {
+        std::vector<TimeUnitInfo> units = getAvailableTimeUnits();
+        TimeUnitInfo current_unit_info = getTimeUnitInfo(m_current_time_unit);
+
+        if (ImGui::BeginCombo("Time Unit", current_unit_info.name.c_str()))
+        {
+            for (const auto& unit : units)
+            {
+                bool is_selected = (unit.unit == m_current_time_unit);
+                if (ImGui::Selectable(unit.name.c_str(), is_selected))
+                {
+                    m_current_time_unit = unit.unit;
+                }
+                if (is_selected)
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndCombo();
+        }
+    }
+    else
+    {
+        TimeUnitInfo current_unit_info = getTimeUnitInfo(m_current_time_unit);
+        ImGui::Text("Current: %s", current_unit_info.name.c_str());
+    }
+
+    // Update previous state for next frame
+    prev_auto_detect = m_auto_detect_time_unit;
+    prev_time_unit = m_current_time_unit;
+
+    ImGui::Separator();
     ImGui::Text("Filters");
     ImGui::InputText("Service", &m_config.service_filter);
     ImGui::InputText("Operation", &m_config.operation_filter);
@@ -911,11 +1043,12 @@ void TimelineViewer::showControlPanel()
     // Show the actual data range for reference
     if (!m_traces.empty())
     {
-        std::string duration_range =
-            std::format("Duration Range: {:.2f} - {:.2f} ms",
-                        m_config.slider_min_bound,
-                        m_config.slider_max_bound);
-        ImGui::Text("%s", duration_range.c_str());
+        std::string duration_range_text =
+            "Duration Range: " +
+            formatTimeWithUnit(m_config.slider_min_bound, m_current_time_unit) +
+            " - " +
+            formatTimeWithUnit(m_config.slider_max_bound, m_current_time_unit);
+        ImGui::Text("%s", duration_range_text.c_str());
     }
 
     ImGui::SliderFloat("Min Duration (ms)",
@@ -937,10 +1070,14 @@ void TimelineViewer::showControlPanel()
     ImGui::Separator();
     if (!m_traces.empty())
     {
-        std::string time_range = std::format("Time Range: {:.2f} - {:.2f}ms",
-                                             m_config.time_slider_min_bound,
-                                             m_config.time_slider_max_bound);
-        ImGui::Text("%s", time_range.c_str());
+        std::string time_range_text =
+            "Time Range: " +
+            formatTimeWithUnit(m_config.time_slider_min_bound,
+                               m_current_time_unit) +
+            " - " +
+            formatTimeWithUnit(m_config.time_slider_max_bound,
+                               m_current_time_unit);
+        ImGui::Text("%s", time_range_text.c_str());
     }
 
     ImGui::SliderFloat("Min Start Time (ms)",
@@ -965,9 +1102,10 @@ void TimelineViewer::showControlPanel()
         const Trace& trace = m_traces[m_selected_trace];
         ImGui::Separator();
         ImGui::Text("Trace Statistics");
-        std::string total_duration =
-            std::format("Total Duration: {:.2f} ms", trace.total_duration);
-        ImGui::Text("%s", total_duration.c_str());
+        std::string total_duration_text =
+            "Total Duration: " +
+            formatTimeWithUnit(trace.total_duration, m_current_time_unit);
+        ImGui::Text("%s", total_duration_text.c_str());
         std::string total_spans =
             std::format("Total Spans: {}", trace.total_spans);
         ImGui::Text("%s", total_spans.c_str());
@@ -1102,7 +1240,7 @@ void TimelineViewer::displayTimelineGrid(ImDrawList* p_draw_list,
                              ImVec2(x, timeline_y_end),
                              m_colors.grid_lines);
 
-        std::string time_str = std::format("{:.1f} ms", time);
+        std::string time_str = formatTimeWithUnit(time, m_current_time_unit);
         p_draw_list->AddText(
             ImVec2(x + m_config.grid_text_offset,
                    timeline_y_start + m_config.grid_text_y_offset),
@@ -1131,7 +1269,8 @@ void TimelineViewer::showTimelinePanel()
     ImGui::Text("%s", trace_text.c_str());
     ImGui::SameLine();
     std::string duration_text =
-        std::format("| Duration: {:.2f} ms", trace.total_duration);
+        "| Duration: " +
+        formatTimeWithUnit(trace.total_duration, m_current_time_unit);
     ImGui::Text("%s", duration_text.c_str());
     ImGui::SameLine();
     std::string spans_text = std::format("| {} spans", trace.total_spans);
@@ -1140,7 +1279,8 @@ void TimelineViewer::showTimelinePanel()
     ImGui::Separator();
 
     std::string view_text =
-        std::format("View: {:.2f} - {:.2f} ms", m_view_start, m_view_end);
+        "View: " + formatTimeWithUnit(m_view_start, m_current_time_unit) +
+        " - " + formatTimeWithUnit(m_view_end, m_current_time_unit);
     ImGui::Text("%s", view_text.c_str());
 
     ImVec2 canvas_pos = ImGui::GetCursorScreenPos();
@@ -1522,4 +1662,103 @@ void TimelineViewer::handleMouseInteractions(ImVec2 p_canvas_pos,
             m_selected_span_details.clear();
         }
     }
+}
+
+// --------------------------------------------------------------------------
+std::vector<TimeUnitInfo> TimelineViewer::getAvailableTimeUnits()
+{
+    return { { TimeUnit::Nanoseconds, "ns", "Nanoseconds", 1.0, 0.0, 1000.0 },
+             { TimeUnit::Microseconds,
+               "us",
+               "Microseconds",
+               1000.0,
+               1000.0,
+               1000000.0 },
+             { TimeUnit::Milliseconds,
+               "ms",
+               "Milliseconds",
+               1000000.0,
+               1000000.0,
+               1000000000.0 },
+             { TimeUnit::Seconds,
+               "s",
+               "Seconds",
+               1000000000.0,
+               1000000000.0,
+               60000000000.0 },
+             { TimeUnit::Minutes,
+               "min",
+               "Minutes",
+               60000000000.0,
+               60000000000.0,
+               3600000000000.0 },
+             { TimeUnit::Hours,
+               "h",
+               "Hours",
+               3600000000000.0,
+               3600000000000.0,
+               std::numeric_limits<double>::max() } };
+}
+
+// --------------------------------------------------------------------------
+double TimelineViewer::convertTime(double nanoseconds, TimeUnit target_unit)
+{
+    TimeUnitInfo unit_info = getTimeUnitInfo(target_unit);
+    return nanoseconds / unit_info.factor_from_nanoseconds;
+}
+
+// --------------------------------------------------------------------------
+TimeUnit TimelineViewer::detectBestTimeUnit(double min_value_ns,
+                                            double max_value_ns)
+{
+    std::vector<TimeUnitInfo> units = getAvailableTimeUnits();
+
+    // Use the maximum value to determine the best unit
+    double range = std::max(std::abs(min_value_ns), std::abs(max_value_ns));
+
+    for (const auto& unit : units)
+    {
+        if (range >= unit.min_threshold && range < unit.max_threshold)
+        {
+            return unit.unit;
+        }
+    }
+
+    // Default to the largest unit if range is very large
+    return TimeUnit::Hours;
+}
+
+// --------------------------------------------------------------------------
+TimeUnitInfo TimelineViewer::getTimeUnitInfo(TimeUnit unit)
+{
+    std::vector<TimeUnitInfo> units = getAvailableTimeUnits();
+    for (const auto& unit_info : units)
+    {
+        if (unit_info.unit == unit)
+        {
+            return unit_info;
+        }
+    }
+    // Default to nanoseconds if not found
+    return units[0];
+}
+
+// --------------------------------------------------------------------------
+std::string TimelineViewer::formatTimeWithUnit(double nanoseconds,
+                                               TimeUnit unit)
+{
+    double converted_time = convertTime(nanoseconds, unit);
+    TimeUnitInfo unit_info = getTimeUnitInfo(unit);
+
+    // Choose precision based on the magnitude of the value
+    int precision = 1;
+    if (converted_time < 1.0)
+        precision = 3;
+    else if (converted_time < 10.0)
+        precision = 2;
+
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(precision) << converted_time << " "
+        << unit_info.symbol;
+    return oss.str();
 }

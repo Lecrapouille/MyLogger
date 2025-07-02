@@ -3,6 +3,7 @@
 - log: Cacher les includes de SFML socket dans log.h
 - log: Ajouter un header et un footer du project comme avant mais au format json => afficher dans un autre dock
 - ✅ viewer: ajouter menu: ouvrir log file
+- ouvrir log file: il manque le selecteur de fichier (comme '..')
 - viewer: ajouter menu: server, port UDP ...
 - ✅ Dock ne sauve pas la position des dock dans le fichier ini
 - ✅ Deplacer bouton "Reset zoom" dans le menu view
@@ -13,3 +14,6 @@
 - la vue n'affiche pas tous les Y, KO quand la fenetre est redimensionnée
 - ✅ filtre sur le temps
 - Coloriser les spans en fonctions du level: info, warning, error ...
+- CORRIGER le temps des spans
+- trace d'une trace ?
+- Ajouter trace.addLog() avec timestamp

@@ -28,10 +28,10 @@ public:
     //-------------------------------------------------------------------------
     //! \brief Implementation for formatting the beginning of a log line.
     //-------------------------------------------------------------------------
-    std::string formatBeginImpl(LogLevel /*p_level*/) const
+    std::string formatBeginImpl(LogLevel /*p_level*/,
+                                bool p_is_first_line) const
     {
-        // No prefix needed for viewer-compatible format
-        return "";
+        return p_is_first_line ? "" : ",";
     }
 
     //-------------------------------------------------------------------------
@@ -40,98 +40,16 @@ public:
     //-------------------------------------------------------------------------
     std::string formatMiddleImpl(const Trace& p_trace) const
     {
-        std::ostringstream json_entry;
+        std::ostringstream os;
 
-        // Create a trace entry with embedded spans (viewer-compatible format)
-        json_entry << R"({)"
-                   << R"("traceId":")" << p_trace.getTraceId() << R"(",)"
-                   << R"("traceName":")" << p_trace.getOperationName()
-                   << R"(",)"
-                   << R"("spans":[{)";
+        os << "{";
+        os << "\"traceID\":\"" << p_trace.getTraceId() << "\","
+           << "\"traceName\":\"" << p_trace.getOperationName() << "\","
+           << "\"spans\":[" << formatAllSpans(p_trace) << "]"
+           << "," << formatTraceMetadata(p_trace);
+        os << "}";
 
-        // Main span data in viewer format
-        json_entry << R"("spanId":")" << p_trace.getSpanId() << R"(",)";
-
-        // Add parentSpanId if any
-        if (!p_trace.getParentSpanId().empty())
-        {
-            json_entry << R"("parentSpanId":")" << p_trace.getParentSpanId()
-                       << R"(",)";
-        }
-
-        json_entry << R"("operationName":")" << p_trace.getOperationName()
-                   << R"(",)"
-                   << R"("serviceName":")" << m_service_name << R"(",)"
-                   << R"("startTime":)" << p_trace.getStartTimeNanos() << R"(,)"
-                   << R"("duration":)" << p_trace.getDurationNanos();
-
-        // Add depth based on parent span existence
-        int depth = p_trace.getParentSpanId().empty() ? 0 : 1;
-        json_entry << R"(,"depth":)" << depth;
-
-        // Add attributes if any
-        if (const auto& attributes = p_trace.getAttributes();
-            !attributes.empty())
-        {
-            json_entry << R"(,"attributes":{)";
-            bool first = true;
-            for (const auto& [key, value] : attributes)
-            {
-                if (!first)
-                    json_entry << R"(,)";
-                json_entry << R"(")" << key << R"(":")" << value << R"(")";
-                first = false;
-            }
-            json_entry << R"(})";
-        }
-
-        // Add events if any
-        if (const auto& events = p_trace.getEvents(); !events.empty())
-        {
-            json_entry << R"(,"events":[)";
-            bool first_event = true;
-            for (const auto& event : events)
-            {
-                if (!first_event)
-                    json_entry << R"(,)";
-
-                json_entry << R"({"name":")" << event.name
-                           << R"(","timestamp":)" << event.timestamp_nanos;
-
-                // Add event attributes if any
-                if (!event.attributes.empty())
-                {
-                    json_entry << R"(,"attributes":{)";
-                    bool first_attr = true;
-                    for (const auto& [key, value] : event.attributes)
-                    {
-                        if (!first_attr)
-                            json_entry << R"(,)";
-                        json_entry << R"(")" << key << R"(":")" << value
-                                   << R"(")";
-                        first_attr = false;
-                    }
-                    json_entry << R"(})";
-                }
-
-                json_entry << R"(})";
-                first_event = false;
-            }
-            json_entry << R"(])";
-        }
-
-        // Close the span and add trace-level metadata
-        json_entry << R"(}],)";
-
-        // Add trace-level properties
-        json_entry << R"("startTime":)" << p_trace.getStartTimeNanos() << R"(,)"
-                   << R"("total_duration":)" << p_trace.getDurationNanos()
-                   << R"(,)"
-                   << R"("total_spans":1)";
-
-        json_entry << R"(})";
-
-        return json_entry.str();
+        return os.str();
     }
 
     //-------------------------------------------------------------------------
@@ -139,7 +57,163 @@ public:
     //-------------------------------------------------------------------------
     std::string formatEndImpl() const
     {
-        return ",\n";
+        return "\n";
+    }
+
+private:
+
+    //-------------------------------------------------------------------------
+    //! \brief Format all spans (main span + children) recursively.
+    //-------------------------------------------------------------------------
+    std::string formatAllSpans(const Trace& p_trace) const
+    {
+        std::ostringstream os;
+
+        // Format the main span
+        os << formatSpan(p_trace);
+
+        // Format all child spans
+        const auto& children = p_trace.getChildren();
+        for (const auto& child : children)
+        {
+            os << "," << formatAllSpans(*child);
+        }
+
+        return os.str();
+    }
+
+    //-------------------------------------------------------------------------
+    //! \brief Format a single span with all its properties.
+    //-------------------------------------------------------------------------
+    std::string formatSpan(const Trace& p_trace) const
+    {
+        std::ostringstream os;
+
+        os << "{" << formatBasicSpanProperties(p_trace)
+           << formatTags(p_trace.getTags())
+           << formatAttributes(p_trace.getAttributes())
+           << formatEvents(p_trace.getEvents()) << "}";
+
+        return os.str();
+    }
+
+    //-------------------------------------------------------------------------
+    //! \brief Format basic span properties (ID, parent, operation, service,
+    //! timing).
+    //-------------------------------------------------------------------------
+    std::string formatBasicSpanProperties(const Trace& p_trace) const
+    {
+        std::ostringstream os;
+
+        // Main span data in viewer format
+        os << "\"spanID\":\"" << p_trace.getSpanId() << "\",";
+
+        // Add parent span ID (traceID) if any
+        if (!p_trace.getParentSpanId().empty())
+        {
+            os << "\"traceID\":\"" << p_trace.getParentSpanId() << "\",";
+        }
+
+        os << "\"operationName\":\"" << p_trace.getOperationName() << "\","
+           << "\"serviceName\":\"" << m_service_name << "\","
+           << "\"startTime\":" << p_trace.getStartTimeNanos() << ","
+           << "\"duration\":" << p_trace.getDurationNanos() << ",";
+
+        // Add depth based on parent span existence
+        int depth = p_trace.getParentSpanId().empty() ? 0 : 1;
+        os << "\"depth\":" << depth;
+
+        return os.str();
+    }
+
+    //-------------------------------------------------------------------------
+    //! \brief Format span attributes as JSON object.
+    //-------------------------------------------------------------------------
+    std::string formatTags(const Trace::Tags& p_tags) const
+    {
+        if (p_tags.empty())
+            return "";
+
+        std::ostringstream os;
+        std::string separator = "";
+
+        os << ",\"tags\":{";
+        for (const auto& [key, value_pair] : p_tags)
+        {
+            os << separator << "\"" << key << "\":{";
+            os << "\"value\":\"" << value_pair.first << "\",";
+            if (!value_pair.second.empty())
+            {
+                os << "\"type\":\"" << value_pair.second << "\"";
+            }
+            os << "}";
+            separator = ",";
+        }
+        os << "}";
+
+        return os.str();
+    }
+
+    //-------------------------------------------------------------------------
+    //! \brief Format span attributes as JSON object.
+    //-------------------------------------------------------------------------
+    std::string formatAttributes(const Trace::Attributes& p_attributes) const
+    {
+        if (p_attributes.empty())
+            return "";
+
+        std::ostringstream os;
+        std::string separator = "";
+
+        os << ",\"attributes\":{";
+        for (const auto& [key, value] : p_attributes)
+        {
+            os << separator << "\"" << key << "\":\"" << value << "\"";
+            separator = ",";
+        }
+        os << "}";
+
+        return os.str();
+    }
+
+    //-------------------------------------------------------------------------
+    //! \brief Format span events as JSON array.
+    //-------------------------------------------------------------------------
+    std::string formatEvents(const std::vector<Event>& p_events) const
+    {
+        if (p_events.empty())
+            return "";
+
+        std::ostringstream os;
+        std::string separator = "";
+
+        os << ",\"events\":[";
+        for (const auto& event : p_events)
+        {
+            os << separator << "{\"name\":\"" << event.name
+               << "\",\"timestamp\":" << event.timestamp_nanos
+               << formatAttributes(event.attributes);
+            os << "}";
+
+            separator = ",";
+        }
+        os << "]";
+
+        return os.str();
+    }
+
+    //-------------------------------------------------------------------------
+    //! \brief Format trace-level metadata (timing and span count).
+    //-------------------------------------------------------------------------
+    std::string formatTraceMetadata(const Trace& p_trace) const
+    {
+        std::ostringstream os;
+
+        os << "\"startTime\":" << p_trace.getStartTimeNanos() << ","
+           << "\"total_duration\":" << p_trace.getDurationNanos() << ","
+           << "\"total_spans\":" << p_trace.getChildren().size() + 1u;
+
+        return os.str();
     }
 
 private:

@@ -24,7 +24,10 @@ public:
     //-------------------------------------------------------------------------
     std::string formatBegin(LogLevel p_level) const
     {
-        return static_cast<const Derived*>(this)->formatBeginImpl(p_level);
+        bool is_first_line = m_is_first_line;
+        m_is_first_line = false;
+        return static_cast<const Derived*>(this)->formatBeginImpl(
+            p_level, is_first_line);
     }
 
     //-------------------------------------------------------------------------
@@ -56,4 +59,8 @@ public:
     {
         return formatBegin(p_level) + formatMiddle(p_trace) + formatEnd();
     }
+
+private:
+
+    mutable bool m_is_first_line = true;
 };
